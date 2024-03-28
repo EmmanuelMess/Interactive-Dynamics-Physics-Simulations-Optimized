@@ -10,12 +10,16 @@ Constraint satisfaction physics simulator with automatic differentiation. This i
 
 ### Setup
 ```bash
-
+cd code
+mkdir build
+cd build
+cmake ..
+make
 ```
 
 ### Running
 ```bash
-
+build/simulator
 ```
 
 ## Thanks
