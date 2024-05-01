@@ -5,22 +5,12 @@
 #include <raymath.h>
 
 #include "symdiff.h"
-
-// Three dimensional matrix
-typedef struct Matrix3 {
-	unsigned int rows;
-	unsigned int cols;
-	unsigned int elements;
-	float * values;
-} Matrix3;
-
-Matrix3 Matrix3Create(unsigned int rows, unsigned int cols, unsigned int elements);
-
-void Matrix3Free(Matrix3 * matrix);
+#include "matrixn.h"
 
 typedef SymbolNode*(*ConstraintFunction)(SymbolMatrixArray* array, SymbolNode* t, SymbolMatrix* x, Vector2 v, Vector2 a, ...);
 
 typedef struct Particle {
+	unsigned int index; //TODO implement
 	Vector2 x;
 	Vector2 v;
 	Vector2 a;
@@ -30,12 +20,15 @@ typedef struct Particle {
 } Particle;
 
 typedef struct ParticleArray {
-	Particle* particles;
-	unsigned int length;
+	Particle** start;
+	unsigned int size;
+	unsigned int last;
 } ParticleArray;
 
 typedef struct Constraint {
-	ParticleArray particles;
+	unsigned int index; //TODO implement
+	ParticleArray* particles;
+	SymbolNode* t;
 	SymbolMatrix* x;
 	SymbolMatrix* v;
 	SymbolMatrix* a;
@@ -46,21 +39,44 @@ typedef struct Constraint {
 } Constraint;
 
 typedef struct ConstraintArray {
-	Constraint* constraints;
-	unsigned int length;
+	Constraint** start;
+	unsigned int size;
+	unsigned int last;
 } ConstraintArray;
 
 
 typedef struct Simulator {
-	ParticleArray particles;
-	ConstraintArray constraints;
+	ParticleArray* particles;
+	ConstraintArray* constraints;
 	bool printData;
 	float time;
 	float error;
 } Simulator;
 
+typedef struct SimulatorMatrices {
+	MatrixN* f;
+	MatrixN* g;
+	MatrixN* J;
+	float norm;
+} SimulatorMatrices;
+
+ParticleArray* ParticleArrayCreate();
+
+void ParticleArrayFree(ParticleArray* particles);
+
+Particle* ParticleCreate(ParticleArray* array);
+
+ConstraintArray* ConstraintArrayCreate();
+
+void ConstraintArrayFree(ConstraintArray* particles);
+
+Constraint* ConstraintCreate(ConstraintArray* array);
+
 SymbolNode* constraintCircle(SymbolMatrixArray* array, SymbolNode* t, SymbolMatrix* x, SymbolMatrix* v, SymbolMatrix* a,
                              ...);
+
+Simulator SimulatorCreate(ParticleArray* particles, ConstraintArray* constraints, bool printData);
+
 void SimulatorUpdate(Simulator* simulator, float timestep);
 
 #endif //CONSTRAINT_BASED_SIMULATOR_SIMULATOR_H

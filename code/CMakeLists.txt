@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.27)
 
 set(CMAKE_C_STANDARD 23)
+SET(CMAKE_CXX_FLAGS "-Wall")
+SET(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 include(Dependencies.cmake)
 ConstraintBasedSimulator_setup_dependencies()
@@ -11,7 +14,11 @@ add_executable(simulator main.c
     simulator.c
     simulator.h
     symdiff.c
-    symdiff.h)
+    symdiff.h
+    matrixn.c
+    matrixn.h
+    math.h
+    math.c)
 
 target_compile_options(simulator PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
@@ -21,7 +28,11 @@ add_executable(test test.c
     simulator.c
     simulator.h
     symdiff.c
-    symdiff.h)
+    symdiff.h
+    matrixn.c
+    matrixn.h
+    math.h
+    math.c)
 
 target_compile_options(test PRIVATE -Wall -Wextra -Wpedantic -Werror)
 

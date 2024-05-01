@@ -31,10 +31,10 @@ typedef struct SymbolNode {
 typedef struct SymbolNodeArray {
 	SymbolNode **start;
 	size_t size;
-	size_t lastPosition;
+	size_t last;
 } SymbolNodeArray;
 
-SymbolNodeArray SymbolNodeArrayCreate();
+SymbolNodeArray* SymbolNodeArrayCreate();
 
 void SymbolNodeArrayFree(SymbolNodeArray* array);
 
@@ -66,11 +66,11 @@ typedef struct SymbolMatrixArray {
 	SymbolMatrix **start;
 	SymbolNodeArray *nodeArray;
 	size_t size;
-	size_t lastPosition;
+	size_t last;
 } SymbolMatrixArray;
 
 
-SymbolMatrixArray SymbolMatrixArrayCreate(SymbolNodeArray *nodeArray);
+SymbolMatrixArray* SymbolMatrixArrayCreate(SymbolNodeArray *nodeArray);
 
 void SymbolMatrixArrayFree(SymbolMatrixArray* array);
 
@@ -82,13 +82,17 @@ void SymbolMatrixFree(SymbolMatrix* matrix);
 
 void SymbolMatrixSetNode(SymbolMatrix *matrix, unsigned int row, unsigned int col, SymbolNode *value);
 
-SymbolNode *SymbolMatrixNode(SymbolMatrix *matrix, unsigned int row, unsigned int col);
+SymbolNode *SymbolMatrixGetNode(SymbolMatrix *matrix, unsigned int row, unsigned int col);
+
+SymbolMatrix* SymbolMatrixTranspose(SymbolMatrix* matrix);
 
 SymbolMatrix* SymbolMatrixAdd(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right);
 
 SymbolMatrix* SymbolMatrixMultiplyValue(SymbolMatrixArray* array, SymbolMatrix* left, SymbolNode* right);
 
 SymbolMatrix* SymbolMatrixMultiplyElementWise(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right);
+
+SymbolMatrix* SymbolMatrixMultiply(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right);
 
 SymbolMatrix* SymbolNodeDifferentiateSymbolMatrix(SymbolNode* expression, SymbolMatrixArray* array, SymbolMatrix* variableMatrix);
 

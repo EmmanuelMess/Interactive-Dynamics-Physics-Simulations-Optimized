@@ -3,13 +3,23 @@
 #include <stdio.h>
 #include <raylib.h>
 
-SymbolNodeArray SymbolNodeArrayCreate() {
-	return (SymbolNodeArray) { .start = NULL, .size = 0, .lastPosition = 0};
+SymbolNodeArray* SymbolNodeArrayCreate() {
+	SymbolNodeArray* array = malloc(sizeof(SymbolNodeArray));
+	*array = (SymbolNodeArray) { .start = NULL, .size = 0, .last = 0};
+	return array;
 }
 
-SymbolNode* NodeArrayAddNode(SymbolNodeArray* array) {
-	if(array->lastPosition == array->size) {
-		array->size += 1024;
+void SymbolNodeArrayFree(SymbolNodeArray* array) {
+	for (unsigned int i = 0; i < array->last; ++i) {
+		free(array->start[i]);
+	}
+	free(array->start);
+	free(array);
+}
+
+SymbolNode* NodeArrayAdd(SymbolNodeArray* array) {
+	if(array->last == array->size) {
+		array->size++;
 		array->start = reallocarray(array->start, array->size, sizeof(SymbolNode*));
 
 		if (array->start == NULL) {
@@ -19,40 +29,34 @@ SymbolNode* NodeArrayAddNode(SymbolNodeArray* array) {
 	}
 
 	SymbolNode* node = malloc(sizeof(SymbolNode));
-	array->start[array->lastPosition] = node;
-	array->lastPosition++;
+	array->start[array->last] = node;
+	array->last++;
 	return node;
 }
 
-void SymbolNodeArrayFree(SymbolNodeArray* array) {
-	for (unsigned int i = 0; i < array->start; ++i) {
-		free(array->start[i]);
-	}
-	free(array->start);
-}
-
 void SymbolNodeArrayPrint(SymbolNodeArray* array) {
-	for (unsigned int i = 0; i < array->lastPosition; ++i) {
+	for (unsigned int i = 0; i < array->last; ++i) {
 		printf("%u:\n", i);
 		SymbolNodePrint(array->start[i]);
 	}
 }
 
 SymbolNode* SymbolNodeConstant(SymbolNodeArray* array, float value) {
-	SymbolNode* node = NodeArrayAddNode(array);
+	SymbolNode* node = NodeArrayAdd(array);
 	*node = (SymbolNode)  { .operation = CONSTANT, .data.value = value };
 	return node;
 }
 
 SymbolNode *SymbolNodeVariable(SymbolNodeArray *array) {
 	static unsigned int variableId = 0;
-	SymbolNode* node = NodeArrayAddNode(array);
-	*node = (SymbolNode)  { .operation = VARIABLE, .data.variableId = variableId++};
+	SymbolNode* node = NodeArrayAdd(array);
+	*node = (SymbolNode)  { .operation = VARIABLE, .data.variableId = variableId};
+	variableId++;
 	return node;
 }
 
 SymbolNode* SymbolNodeBinary(SymbolNodeArray* array, Operation operation, SymbolNode* left, SymbolNode* right) {
-	SymbolNode* node = NodeArrayAddNode(array);
+	SymbolNode* node = NodeArrayAdd(array);
 	*node = (SymbolNode)  { .operation = operation, .data.children.left = left, .data.children.right = right };
 	return node;
 }
@@ -168,14 +172,29 @@ void SymbolNodePrint(SymbolNode* expression) {
 	printf("\n");
 }
 
-SymbolMatrixArray SymbolMatrixArrayCreate(SymbolNodeArray *nodeArray) {
-	return (SymbolMatrixArray) { .start = NULL, .nodeArray = nodeArray, .size = 0, .lastPosition = 0};
+//-----------------------------------------------------------------------------
+// SymbolMatrix
+//-----------------------------------------------------------------------------
+
+SymbolMatrixArray* SymbolMatrixArrayCreate(SymbolNodeArray *nodeArray) {
+	SymbolMatrixArray* array = malloc(sizeof(SymbolMatrixArray));
+	*array = (SymbolMatrixArray) { .start = NULL, .nodeArray = nodeArray, .size = 0, .last = 0};
+	return array;
 }
 
-SymbolMatrix* SymbolMatrixArrayAddNode(SymbolMatrixArray* array) {
-	if(array->lastPosition == array->size) {
-		array->size += 1024;
-		array->start = reallocarray(array->start, array->size, sizeof(SymbolNode*)); // TODO this is broken
+void SymbolMatrixArrayFree(SymbolMatrixArray* array) {
+	for (unsigned int i = 0; i < array->last; ++i) {
+		SymbolMatrixFree(array->start[i]);
+	}
+
+	free(array->start);
+	free(array);
+}
+
+SymbolMatrix* SymbolMatrixArrayAdd(SymbolMatrixArray* array) {
+	if(array->last == array->size) {
+		array->size++;
+		array->start = reallocarray(array->start, array->size, sizeof(SymbolNode*));
 
 		if (array->start == NULL) {
 			TraceLog(LOG_ERROR, "No memory");
@@ -185,28 +204,20 @@ SymbolMatrix* SymbolMatrixArrayAddNode(SymbolMatrixArray* array) {
 
 
 	SymbolMatrix* matrix = malloc(sizeof(SymbolMatrix));
-	array->start[array->lastPosition] = matrix;
-	array->lastPosition++;
+	array->start[array->last] = matrix;
+	array->last++;
 	return matrix;
 }
 
-void SymbolMatrixArrayFree(SymbolMatrixArray* array) {
-	for (unsigned int i = 0; i < array->lastPosition; ++i) {
-		SymbolMatrixFree(array->start[i]);
-	}
-
-	free(array->start);
-}
-
 void SymbolMatrixArrayPrint(SymbolMatrixArray* array) {
-	for (unsigned int i = 0; i < array->lastPosition; ++i) {
+	for (unsigned int i = 0; i < array->last; ++i) {
 		printf("%u:\n", i);
 		SymbolMatrixPrint(array->start[i]);
 	}
 }
 
 SymbolMatrix *SymbolMatrixCreate(SymbolMatrixArray *array, unsigned int rows, unsigned int cols) {
-	SymbolMatrix* matrix = SymbolMatrixArrayAddNode(array);
+	SymbolMatrix* matrix = SymbolMatrixArrayAdd(array);
 	*matrix = (SymbolMatrix) {
 		.values = calloc(cols * rows, sizeof(SymbolNode*)),
 		.cols = cols,
@@ -223,8 +234,20 @@ void SymbolMatrixSetNode(SymbolMatrix *matrix, unsigned int row, unsigned int co
 	matrix->values[row + col * matrix->cols] = value;
 }
 
-SymbolNode *SymbolMatrixNode(SymbolMatrix *matrix, unsigned int row, unsigned int col) {
+SymbolNode *SymbolMatrixGetNode(SymbolMatrix *matrix, unsigned int row, unsigned int col) {
 	return matrix->values[row + col * matrix->cols];
+}
+
+SymbolMatrix* SymbolMatrixTranspose(SymbolMatrix* matrix) {
+	for (unsigned int i = 0; i < matrix->rows / 2; ++i) {
+		for (unsigned int j = 0; j < matrix->cols / 2; ++j) {
+			SymbolNode* t = SymbolMatrixGetNode(matrix, i, j);
+			SymbolMatrixSetNode(matrix, i, j, SymbolMatrixGetNode(matrix, j, i));
+			SymbolMatrixSetNode(matrix, j, i, t);
+		}
+	}
+
+	return matrix;
 }
 
 SymbolMatrix* SymbolMatrixAdd(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right) {
@@ -267,11 +290,37 @@ SymbolMatrix* SymbolMatrixMultiplyElementWise(SymbolMatrixArray* array, SymbolMa
 	return matrix;
 }
 
+SymbolMatrix* SymbolMatrixMultiply(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right) {
+	if(left->cols != right->rows) {
+		TraceLog(LOG_ERROR, "Matrix dimensions don't match!");
+		exit(EXIT_FAILURE);
+	}
+
+	SymbolMatrix* sumMatrix = SymbolMatrixCreate(array, left->rows, right->cols);
+
+	for (unsigned int i = 0; i < sumMatrix->rows; ++i) {
+		for (unsigned int j = 0; i < sumMatrix->cols; ++j) {
+			SymbolNode *r = SymbolNodeConstant(array->nodeArray, 0);
+
+			for (unsigned int k = 0; i < left->cols; ++k) {
+				SymbolNode* lNode = SymbolMatrixGetNode(left, i, k);
+				SymbolNode* rNode = SymbolMatrixGetNode(right, k, j);
+				SymbolNode* sum = SymbolNodeBinary(array->nodeArray, ADD, lNode, rNode);
+				r = SymbolNodeBinary(array->nodeArray, ADD, r, sum);
+			}
+
+			SymbolMatrixSetNode(sumMatrix, i, j, r);
+		}
+	}
+
+	return sumMatrix;
+}
+
 SymbolMatrix* SymbolNodeDifferentiateSymbolMatrix(SymbolNode* expression, SymbolMatrixArray* array, SymbolMatrix* variableMatrix) {
 	SymbolMatrix * result = SymbolMatrixCreate(array, variableMatrix->rows, variableMatrix->cols);
 	for (unsigned int col = 0; col < variableMatrix->cols; ++col) {
 		for (unsigned int row = 0; row < variableMatrix->rows; ++row) {
-			SymbolNode* variable = SymbolMatrixNode(variableMatrix, row, col);
+			SymbolNode* variable = SymbolMatrixGetNode(variableMatrix, row, col);
 			SymbolNode* r = SymbolNodeDifferentiate(expression, array->nodeArray, variable);
 			SymbolMatrixSetNode(result, row, col, r);
 		}
@@ -283,7 +332,7 @@ SymbolMatrix* SymbolMatrixDifferentiateSymbolNode(SymbolMatrix* expression, Symb
 	SymbolMatrix * result = SymbolMatrixCreate(array, expression->rows, expression->cols);
 	for (unsigned int col = 0; col < expression->cols; ++col) {
 		for (unsigned int row = 0; row < expression->rows; ++row) {
-			SymbolNode* valueExpression = SymbolMatrixNode(expression, row, col);
+			SymbolNode* valueExpression = SymbolMatrixGetNode(expression, row, col);
 			SymbolNode* r = SymbolNodeDifferentiate(valueExpression, array->nodeArray, variable);
 			SymbolMatrixSetNode(result, row, col, r);
 		}
@@ -295,7 +344,7 @@ void SymbolMatrixPrintInternal(SymbolMatrix* expression) {
 	for (unsigned int col = 0; col < expression->cols; ++col) {
 		for (unsigned int row = 0; row < expression->rows; ++row) {
 			printf("(%u, %u) ", row, col);
-			SymbolNode* valueExpression = SymbolMatrixNode(expression, row, col);
+			SymbolNode* valueExpression = SymbolMatrixGetNode(expression, row, col);
 			SymbolNodePrintInternal(valueExpression);
 			printf("\n");
 		}
