@@ -12,12 +12,8 @@ project(simulator C)
 
 add_executable(simulator main.c
     simulator.c
-    simulator.h
     symdiff.c
-    symdiff.h
     matrixn.c
-    matrixn.h
-    math.h
     math.c)
 
 target_compile_options(simulator PRIVATE -Wall -Wextra -Wpedantic -Werror)
@@ -26,12 +22,8 @@ target_link_libraries(simulator raylib)
 
 add_executable(test test.c
     simulator.c
-    simulator.h
     symdiff.c
-    symdiff.h
     matrixn.c
-    matrixn.h
-    math.h
     math.c)
 
 target_compile_options(test PRIVATE -Wall -Wextra -Wpedantic -Werror)
