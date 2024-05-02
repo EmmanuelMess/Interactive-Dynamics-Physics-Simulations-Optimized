@@ -1,8 +1,3 @@
-#undef SUPPORT_MODULE_RSHAPES
-#undef SUPPORT_MODULE_RTEXTURES
-#undef SUPPORT_MODULE_RMODELS
-#undef SUPPORT_MODULE_RAUDIO
-
 #include <raylib.h>
 #include <stdio.h>
 
@@ -77,7 +72,11 @@ int main(void) {
 		// Update
 		//----------------------------------------------------------------------------------
 
+		const double updateTimeStartMs = GetTime() * 1000;
+
 		SimulatorUpdate(&simulator, 0.00005f);
+
+		const double updateTimeEndMs = GetTime() * 1000;
 
 		//----------------------------------------------------------------------------------
 
@@ -89,6 +88,7 @@ int main(void) {
 
 		DrawText(TextFormat("t %fs", simulator.time), 5, 5+0*15, FONT_SIZE, BLACK);
 		DrawText(TextFormat("error %f", simulator.error), 5, 5+1*15, FONT_SIZE, BLACK);
+		DrawText(TextFormat("ΔT %.6fms", updateTimeEndMs - updateTimeStartMs), 5, 5+2*15, FONT_SIZE, BLACK);
 
 		DrawEllipseLines(iroundf(center.x), iroundf(center.y), radius.x, radius.y, LIGHTGRAY);
 
@@ -96,7 +96,7 @@ int main(void) {
 			Particle *particle = particleArray->start[i];
 			const char * text = TextFormat("p %u\n  x [%-.6F %.6F]\n  v [%-.6F %.6F]\n  a [%-.6F %.6F]",
 								i, particle->x.x, particle->x.y, particle->v.x, particle->v.y, particle->a.x, particle->a.y);
-			DrawText(text, 5, 5+2*15, FONT_SIZE, BLACK);
+			DrawText(text, 5, 5+3*15+i*15, FONT_SIZE, BLACK);
 
 			DrawCircle(iroundf(particle->x.x), iroundf(particle->x.y), 4, particle->isStatic? RED:BLUE);
 			DrawLine(iroundf(particle->x.x), iroundf(particle->x.y),
