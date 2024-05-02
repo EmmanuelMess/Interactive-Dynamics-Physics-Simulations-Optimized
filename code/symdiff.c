@@ -179,14 +179,17 @@ void SymbolNodePrint(SymbolNode* expression) {
 // SymbolMatrix
 //-----------------------------------------------------------------------------
 
-SymbolMatrixArray* SymbolMatrixArrayCreate(SymbolNodeArray *nodeArray) {
+SymbolMatrixArray* SymbolMatrixArrayCreate() {
 	SymbolMatrixArray* array = malloc(sizeof(SymbolMatrixArray));
-	*array = (SymbolMatrixArray) { .start = NULL, .nodeArray = nodeArray, .size = 0, .last = 0};
+	*array = (SymbolMatrixArray) { .start = NULL, .nodeArray = SymbolNodeArrayCreate(), .size = 0, .last = 0};
 	return array;
 }
 
 void SymbolMatrixArrayFree(SymbolMatrixArray* array) {
+	SymbolNodeArrayFree(array->nodeArray);
+
 	for (unsigned int i = 0; i < array->last; ++i) {
+		SymbolMatrixFree(array->start[i]);
 		free(array->start[i]);
 	}
 
@@ -227,6 +230,10 @@ SymbolMatrix *SymbolMatrixCreate(SymbolMatrixArray *array, unsigned int rows, un
 		.rows = rows,
 	};
 	return matrix;
+}
+
+void SymbolMatrixFree(SymbolMatrix *matrix) {
+	free(matrix->values);
 }
 
 void SymbolMatrixSet(SymbolMatrix *matrix, unsigned int row, unsigned int col, SymbolNode *value) {

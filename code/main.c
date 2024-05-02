@@ -14,28 +14,27 @@ int main(void) {
 
 	InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
 
-	SymbolNodeArray* symbolNodeArray = SymbolNodeArrayCreate();
-	SymbolMatrixArray* symbolMatrixArray = SymbolMatrixArrayCreate(symbolNodeArray);
+	SymbolMatrixArray* symbolMatrixArray = SymbolMatrixArrayCreate();
 	MatrixNArray* matrixNArray = MatrixNArrayCreate();
 	ParticleArray* particleArray = ParticleArrayCreate();
 	ConstraintArray* constraintArray = ConstraintArrayCreate();
 
-	SymbolNode* t = SymbolNodeVariable(symbolNodeArray);
+	SymbolNode* t = SymbolNodeVariable(symbolMatrixArray->nodeArray);
 	SymbolMatrix* x = SymbolMatrixCreate(symbolMatrixArray, 1, 2);
-	SymbolMatrixSet(x, 0, 0, SymbolNodeVariable(symbolNodeArray));
-	SymbolMatrixSet(x, 0, 1, SymbolNodeVariable(symbolNodeArray));
+	SymbolMatrixSet(x, 0, 0, SymbolNodeVariable(symbolMatrixArray->nodeArray));
+	SymbolMatrixSet(x, 0, 1, SymbolNodeVariable(symbolMatrixArray->nodeArray));
 	SymbolMatrix* v = SymbolMatrixCreate(symbolMatrixArray, 1, 2);
-	SymbolMatrixSet(v, 0, 0, SymbolNodeVariable(symbolNodeArray));
-	SymbolMatrixSet(v, 0, 1, SymbolNodeVariable(symbolNodeArray));
+	SymbolMatrixSet(v, 0, 0, SymbolNodeVariable(symbolMatrixArray->nodeArray));
+	SymbolMatrixSet(v, 0, 1, SymbolNodeVariable(symbolMatrixArray->nodeArray));
 	SymbolMatrix* a = SymbolMatrixCreate(symbolMatrixArray, 1, 2);
-	SymbolMatrixSet(a, 0, 0, SymbolNodeVariable(symbolNodeArray));
-	SymbolMatrixSet(a, 0, 1, SymbolNodeVariable(symbolNodeArray));
+	SymbolMatrixSet(a, 0, 0, SymbolNodeVariable(symbolMatrixArray->nodeArray));
+	SymbolMatrixSet(a, 0, 1, SymbolNodeVariable(symbolMatrixArray->nodeArray));
 
 	const Vector2 center = (Vector2) { .x = 200.0f, .y = 200.0f };
 	const Vector2 radius = (Vector2) { .x = 100.0f, .y = 100.0f };
 
 	SymbolNode* f = constraintCircle(symbolMatrixArray, t, x, v, a, center, radius);
-	SymbolNode* df_dt = SymbolNodeDifferentiate(f, symbolNodeArray, t);
+	SymbolNode* df_dt = SymbolNodeDifferentiate(f, symbolMatrixArray->nodeArray, t);
 	SymbolMatrix* df_dx = SymbolNodeDifferentiateSymbolMatrix(f, symbolMatrixArray, x);
 	SymbolMatrix* df_dxdt = SymbolMatrixDifferentiateSymbolNode(df_dx, symbolMatrixArray, t);
 
@@ -60,12 +59,11 @@ int main(void) {
 		.constraintFunction_dxdt = df_dxdt,
 	};
 
-	Simulator simulator = SimulatorCreate(symbolNodeArray, symbolMatrixArray, matrixNArray, particleArray,
-										  constraintArray, true);
+	Simulator simulator = SimulatorCreate(particleArray, constraintArray, true);
 
 	const int FONT_SIZE = 11;
 
-	SetTargetFPS(60);
+	SetTargetFPS(0);
 	//--------------------------------------------------------------------------------------
 
 	while (!WindowShouldClose()) { // Detect window close button or ESC key
@@ -86,9 +84,11 @@ int main(void) {
 
 		ClearBackground(RAYWHITE);
 
+		DrawText(TextFormat("%2i FPS", GetFPS()), screenWidth - 50, 0, 10, BLACK);
+
 		DrawText(TextFormat("t %fs", simulator.time), 5, 5+0*15, FONT_SIZE, BLACK);
 		DrawText(TextFormat("error %f", simulator.error), 5, 5+1*15, FONT_SIZE, BLACK);
-		DrawText(TextFormat("ΔT %.6fms", updateTimeEndMs - updateTimeStartMs), 5, 5+2*15, FONT_SIZE, BLACK);
+		DrawText(TextFormat("ΔT %.3fms", updateTimeEndMs - updateTimeStartMs), 5, 5+2*15, FONT_SIZE, BLACK);
 
 		DrawEllipseLines(iroundf(center.x), iroundf(center.y), radius.x, radius.y, LIGHTGRAY);
 
@@ -115,7 +115,6 @@ int main(void) {
 
 	// De-Initialization
 	//--------------------------------------------------------------------------------------
-	SymbolNodeArrayFree(symbolNodeArray);
 	SymbolMatrixArrayFree(symbolMatrixArray);
 	MatrixNArrayFree(matrixNArray);
 	ParticleArrayFree(particleArray);

@@ -25,6 +25,12 @@ typedef struct ParticleArray {
 	unsigned int last;
 } ParticleArray;
 
+ParticleArray* ParticleArrayCreate();
+
+void ParticleArrayFree(ParticleArray* particles);
+
+Particle* ParticleCreate(ParticleArray* array);
+
 typedef struct Constraint {
 	unsigned int index; //TODO implement
 	ParticleArray* particles;
@@ -44,11 +50,13 @@ typedef struct ConstraintArray {
 	unsigned int last;
 } ConstraintArray;
 
+ConstraintArray* ConstraintArrayCreate();
+
+void ConstraintArrayFree(ConstraintArray* particles);
+
+Constraint* ConstraintCreate(ConstraintArray* array);
 
 typedef struct Simulator {
-	SymbolNodeArray* symbolNodeArray;
-	SymbolMatrixArray* symbolMatrixArray;
-	MatrixNArray* matrixNArray;
 	float ks;
 	float kd;
 	ParticleArray* particles;
@@ -65,24 +73,10 @@ typedef struct SimulatorMatrices {
 	float norm;
 } SimulatorMatrices;
 
-ParticleArray* ParticleArrayCreate();
-
-void ParticleArrayFree(ParticleArray* particles);
-
-Particle* ParticleCreate(ParticleArray* array);
-
-ConstraintArray* ConstraintArrayCreate();
-
-void ConstraintArrayFree(ConstraintArray* particles);
-
-Constraint* ConstraintCreate(ConstraintArray* array);
-
 SymbolNode* constraintCircle(SymbolMatrixArray* array, SymbolNode* t, SymbolMatrix* x, SymbolMatrix* v, SymbolMatrix* a,
                              ...);
 
-Simulator SimulatorCreate(SymbolNodeArray* symbolNodeArray, SymbolMatrixArray* symbolMatrixArray,
-                          MatrixNArray* matrixNArray, ParticleArray* particles, ConstraintArray* constraints,
-                          bool printData);
+Simulator SimulatorCreate(ParticleArray* particles, ConstraintArray* constraints, bool printData);
 
 void SimulatorUpdate(Simulator* simulator, float timestep);
 

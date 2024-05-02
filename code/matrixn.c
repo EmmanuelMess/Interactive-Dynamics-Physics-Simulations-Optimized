@@ -12,6 +12,7 @@ MatrixNArray* MatrixNArrayCreate() {
 
 void MatrixNArrayFree(MatrixNArray* array) {
 	for (size_t i = 0; i < array->last; ++i) {
+		MatrixNFree(array->start[i]);
 		free(array->start[i]);
 	}
 	free(array->start);
@@ -51,6 +52,10 @@ MatrixN* MatrixNCreate(MatrixNArray* array, unsigned int rows, unsigned int cols
 	};
 
 	return matrix;
+}
+
+void MatrixNFree(MatrixN* matrix) {
+	free(matrix->values);
 }
 
 float* MatrixNGet(MatrixN * matrix, unsigned int row, unsigned int col) {
@@ -178,6 +183,8 @@ MatrixN* MatrixNInverse (MatrixNArray* array, MatrixN * matrix) {
 
 	MatrixN * result = MatrixNCreate(array, matrix->rows, matrix->cols);
 
+
+	// Algorithm from https://rosettacode.org/wiki/Gauss-Jordan_matrix_inversion#C
 	const unsigned int n = matrix->rows;
 	if (n < 1) {
 		TraceLog(LOG_FATAL, "Matrix is not invertible!");
@@ -208,8 +215,7 @@ MatrixN* MatrixNInverse (MatrixNArray* array, MatrixN * matrix) {
 			}
 		}
 		if (f < tol) {
-			TraceLog(LOG_ERROR, "Matrix is singular!");
-			exit(EXIT_FAILURE);
+			TraceLog(LOG_FATAL, "Matrix is singular!");
 		}
 		if (p != k) {  /* Swap rows. */
 			for (unsigned int j = k; j < n; ++j) {
@@ -233,6 +239,7 @@ MatrixN* MatrixNInverse (MatrixNArray* array, MatrixN * matrix) {
 			for (unsigned int j = 0; j < n; ++j) result->values[j+i*n] -= result->values[j+k*n] * f;
 		}
 	}
+
 	return result;
 }
 

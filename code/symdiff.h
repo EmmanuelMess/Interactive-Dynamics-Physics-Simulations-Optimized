@@ -70,13 +70,15 @@ typedef struct SymbolMatrixArray {
 } SymbolMatrixArray;
 
 
-SymbolMatrixArray* SymbolMatrixArrayCreate(SymbolNodeArray *nodeArray);
+SymbolMatrixArray* SymbolMatrixArrayCreate();
 
 void SymbolMatrixArrayFree(SymbolMatrixArray* array);
 
 void SymbolMatrixArrayPrint(SymbolMatrixArray* array);
 
 SymbolMatrix *SymbolMatrixCreate(SymbolMatrixArray *array, unsigned int rows, unsigned int cols);
+
+void SymbolMatrixFree(SymbolMatrix *matrix);
 
 void SymbolMatrixSet(SymbolMatrix *matrix, unsigned int row, unsigned int col, SymbolNode *value);
 
