@@ -4,6 +4,11 @@
 #include "simulator.h"
 #include "math.h"
 
+#undef SUPPORT_MODULE_RSHAPES
+#undef SUPPORT_MODULE_RTEXTURES
+#undef SUPPORT_MODULE_RMODELS
+#undef SUPPORT_MODULE_RAUDIO
+
 int main(void) {
 	// Initialization
 	//--------------------------------------------------------------------------------------
@@ -16,6 +21,7 @@ int main(void) {
 
 	SymbolNodeArray* symbolNodeArray = SymbolNodeArrayCreate();
 	SymbolMatrixArray* symbolMatrixArray = SymbolMatrixArrayCreate(symbolNodeArray);
+	MatrixNArray* matrixNArray = MatrixNArrayCreate();
 	ParticleArray* particleArray = ParticleArrayCreate();
 	ConstraintArray* constraintArray = ConstraintArrayCreate();
 
@@ -59,7 +65,8 @@ int main(void) {
 		.constraintFunction_dxdt = df_dxdt,
 	};
 
-	Simulator simulator = SimulatorCreate(particleArray, constraintArray, true);
+	Simulator simulator = SimulatorCreate(symbolNodeArray, symbolMatrixArray, matrixNArray, particleArray,
+										  constraintArray, true);
 
 	const int FONT_SIZE = 11;
 
@@ -105,6 +112,7 @@ int main(void) {
 	//--------------------------------------------------------------------------------------
 	SymbolNodeArrayFree(symbolNodeArray);
 	SymbolMatrixArrayFree(symbolMatrixArray);
+	MatrixNArrayFree(matrixNArray);
 	ParticleArrayFree(particleArray);
 	ConstraintArrayFree(constraintArray);
 

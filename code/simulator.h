@@ -46,6 +46,9 @@ typedef struct ConstraintArray {
 
 
 typedef struct Simulator {
+	SymbolNodeArray* symbolNodeArray;
+	SymbolMatrixArray* symbolMatrixArray;
+	MatrixNArray* matrixNArray;
 	float ks;
 	float kd;
 	ParticleArray* particles;
@@ -77,7 +80,9 @@ Constraint* ConstraintCreate(ConstraintArray* array);
 SymbolNode* constraintCircle(SymbolMatrixArray* array, SymbolNode* t, SymbolMatrix* x, SymbolMatrix* v, SymbolMatrix* a,
                              ...);
 
-Simulator SimulatorCreate(ParticleArray* particles, ConstraintArray* constraints, bool printData);
+Simulator SimulatorCreate(SymbolNodeArray* symbolNodeArray, SymbolMatrixArray* symbolMatrixArray,
+                          MatrixNArray* matrixNArray, ParticleArray* particles, ConstraintArray* constraints,
+                          bool printData);
 
 void SimulatorUpdate(Simulator* simulator, float timestep);
 

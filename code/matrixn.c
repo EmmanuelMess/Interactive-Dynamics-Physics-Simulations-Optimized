@@ -6,13 +6,13 @@
 
 MatrixNArray* MatrixNArrayCreate() {
 	MatrixNArray* array = malloc(sizeof(MatrixNArray));
-	*array = (MatrixNArray) { .start = NULL, .size = 0, .last = 0};
+	*array = (MatrixNArray) { .start = NULL, .size = 0, .last = 0 };
 	return array;
 }
 
 void MatrixNArrayFree(MatrixNArray* array) {
 	for (size_t i = 0; i < array->last; ++i) {
-		MatrixNFree(array->start[i]);
+		free(array->start[i]);
 	}
 	free(array->start);
 	free(array);
@@ -29,10 +29,10 @@ MatrixN* MatrixNArrayAdd(MatrixNArray* array) {
 		}
 	}
 
-	MatrixN* node = malloc(sizeof(MatrixN));
-	array->start[array->last] = node;
+	MatrixN* matrix = malloc(sizeof(MatrixN));
+	array->start[array->last] = matrix;
 	array->last++;
-	return node;
+	return matrix;
 }
 
 void MatrixNArrayPrint(MatrixNArray* array) {
@@ -52,10 +52,6 @@ MatrixN* MatrixNCreate(MatrixNArray* array, unsigned int rows, unsigned int cols
 	};
 
 	return matrix;
-}
-
-void MatrixNFree(MatrixN * matrix) {
-	free(matrix->values);
 }
 
 float* MatrixNGet(MatrixN * matrix, unsigned int row, unsigned int col) {
@@ -79,8 +75,7 @@ void MatrixNPrint(MatrixN* matrix) {
 
 void MatrixNReshape(MatrixN * matrix, unsigned int rows, unsigned int cols) {
 	if(matrix->rows * matrix->cols != cols * rows) {
-		TraceLog(LOG_ERROR, "Amount of elements in matrix don't match!");
-		exit(EXIT_FAILURE);
+		TraceLog(LOG_FATAL, "Amount of elements in matrix don't match!");
 	}
 
 	matrix->rows = rows;
@@ -125,8 +120,7 @@ MatrixN* MatrixNNegate(MatrixNArray* array, MatrixN * matrix) {
 
 MatrixN* MatrixNAdd(MatrixNArray* array, MatrixN * a,  MatrixN * b) {
 	if(a->rows != b->rows || a->cols != b->cols) {
-		TraceLog(LOG_ERROR, "Matrix dimensions don't match!");
-		exit(EXIT_FAILURE);
+		TraceLog(LOG_FATAL, "Matrix dimensions don't match!");
 	}
 
 	MatrixN* result = MatrixNCreate(array, a->rows, a->cols);
@@ -142,8 +136,7 @@ MatrixN* MatrixNAdd(MatrixNArray* array, MatrixN * a,  MatrixN * b) {
 
 MatrixN* MatrixNMultiply(MatrixNArray* array, MatrixN * a,  MatrixN * b) {
 	if(a->cols != b->rows) {
-		TraceLog(LOG_ERROR, "Matrix dimensions don't match!");
-		exit(EXIT_FAILURE);
+		TraceLog(LOG_FATAL, "Matrix dimensions don't match!");
 	}
 
 
@@ -177,16 +170,14 @@ MatrixN* MatrixNMultiplyValue(MatrixNArray* array, MatrixN * matrix, float value
 
 MatrixN* MatrixNInverse (MatrixNArray* array, MatrixN * matrix) {
 	if(matrix->rows != matrix->cols) {
-		TraceLog(LOG_ERROR, "Matrix is not square!");
-		exit(EXIT_FAILURE);
+		TraceLog(LOG_FATAL, "Matrix is not square!");
 	}
 
 	MatrixN * result = MatrixNCreate(array, matrix->rows, matrix->cols);
 
 	const unsigned int n = matrix->rows;
 	if (n < 1) {
-		TraceLog(LOG_ERROR, "Matrix is not invertible!");
-		exit(EXIT_FAILURE);
+		TraceLog(LOG_FATAL, "Matrix is not invertible!");
 	}
 	float g;
 	float f = 0.0f;  /* Frobenius norm of a */

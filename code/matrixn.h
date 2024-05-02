@@ -27,8 +27,6 @@ void MatrixNArrayPrint(MatrixNArray* array);
 
 MatrixN* MatrixNCreate(MatrixNArray* array, unsigned int rows, unsigned int cols);
 
-void MatrixNFree(MatrixN * matrix);
-
 float* MatrixNGet(MatrixN * matrix, unsigned int row, unsigned int col);
 
 void MatrixNPrint(MatrixN* array);

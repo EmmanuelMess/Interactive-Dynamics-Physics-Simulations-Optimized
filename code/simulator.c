@@ -1,6 +1,7 @@
 #include "simulator.h"
 
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "symdiff.h"
 
@@ -21,6 +22,7 @@ ParticleArray* ParticleArrayCreate() {
 void ParticleArrayFree(ParticleArray* array) {
 	for (size_t i = 0; i < array->last; ++i) {
 		//TODO ParticleFree(array->start[i]);
+		free(array->start[i]);
 	}
 	free(array->start);
 	free(array);
@@ -158,7 +160,11 @@ SymbolNode* constraintCircle(SymbolMatrixArray* array, SymbolNode* t, SymbolMatr
 // Then evaluate the expression
 float ConstraintEvaluateSymbolNode(Constraint* constraint, SymbolNodeArray *array, SymbolNode* expression) {
 	SymbolNode* result = expression;
-	result = SymbolNodeEvaluate(result, array, constraint->t, 0);
+	printf("E ");
+	SymbolNodePrint(result);
+	result = SymbolNodeEvaluate(result, array, constraint->t, 0.0f);
+	printf("E t = %f ", 0.0f);
+	SymbolNodePrint(result);
 
 	for (unsigned int i = 0; i < constraint->particles->last; ++i) {
 		Particle* particle = constraint->particles->start[i];
@@ -166,13 +172,19 @@ float ConstraintEvaluateSymbolNode(Constraint* constraint, SymbolNodeArray *arra
 		// Set particle position
 		result = SymbolNodeEvaluate(result, array, SymbolMatrixGetNode(constraint->x, 0, i), particle->x.x);
 		result = SymbolNodeEvaluate(result, array, SymbolMatrixGetNode(constraint->x, 1, i), particle->x.y);
+		printf("E p(%f,%f) ", particle->x.x, particle->x.y);
+		SymbolNodePrint(result);
 
 		// Set particle velocity
 		result = SymbolNodeEvaluate(result, array, SymbolMatrixGetNode(constraint->v, 0, i), particle->v.x);
 		result = SymbolNodeEvaluate(result, array, SymbolMatrixGetNode(constraint->v, 1, i), particle->v.y);
+		printf("E v(%f,%f) ", particle->v.x, particle->v.y);
+		SymbolNodePrint(result);
 
 		// Set particle acceleration
 		result = SymbolNodeEvaluate(result, array, SymbolMatrixGetNode(constraint->a, 0, i), particle->a.x);
+		printf("E a(%f,%f) ", particle->a.x, particle->a.y);
+		SymbolNodePrint(result);
 		result = SymbolNodeEvaluate(result, array, SymbolMatrixGetNode(constraint->a, 1, i), particle->a.y);
 	}
 
@@ -272,8 +284,13 @@ SimulatorMatrices GetMatrices(SymbolMatrixArray *array, MatrixNArray* matrixNArr
 	};
 }
 
-Simulator SimulatorCreate(ParticleArray* particles, ConstraintArray* constraints, bool printData) {
+Simulator SimulatorCreate(SymbolNodeArray* symbolNodeArray, SymbolMatrixArray* symbolMatrixArray,
+						  MatrixNArray* matrixNArray, ParticleArray* particles, ConstraintArray* constraints,
+						  bool printData) {
 	return (Simulator) {
+		.symbolNodeArray = symbolNodeArray,
+		.symbolMatrixArray = symbolMatrixArray,
+		.matrixNArray = matrixNArray,
 		.ks = 0.1f,
 		.kd = 0.01f,
 		.particles = particles,
@@ -296,21 +313,17 @@ void SimulatorUpdate(Simulator* simulator, float timestep) {
 		particle->a = particle->aApplied;
 	}
 
-	SymbolNodeArray* array = SymbolNodeArrayCreate();
-	SymbolMatrixArray* symbolMatrixArray = SymbolMatrixArrayCreate(array);
-	MatrixNArray* matrixNArray = MatrixNArrayCreate();
-
-	SimulatorMatrices matrices = GetMatrices(symbolMatrixArray, matrixNArray, simulator->ks, simulator->kd,
-											 simulator->particles, simulator->constraints);
+	SimulatorMatrices matrices = GetMatrices(simulator->symbolMatrixArray, simulator->matrixNArray, simulator->ks,
+											 simulator->kd, simulator->particles, simulator->constraints);
 
 	// Solve for x in g(X) * λ = -f(X)
-	MatrixN* t10 = MatrixNPseudoinverse(matrixNArray, matrices.g);
-	MatrixN* t11 = MatrixNNegate(matrixNArray, matrices.f);
-	MatrixN* lambda = MatrixNMultiply(matrixNArray, t10, t11);
+	MatrixN* t10 = MatrixNPseudoinverse(simulator->matrixNArray, matrices.g);
+	MatrixN* t11 = MatrixNNegate(simulator->matrixNArray, matrices.f);
+	MatrixN* lambda = MatrixNMultiply(simulator->matrixNArray, t10, t11);
 
 	// Solve for accelerations in J' * λ = â
-	MatrixN* transposeJ = MatrixNTranspose(matrixNArray, matrices.J);
-	MatrixN* aConstraint = MatrixNMultiply(matrixNArray, transposeJ, lambda);
+	MatrixN* transposeJ = MatrixNTranspose(simulator->matrixNArray, matrices.J);
+	MatrixN* aConstraint = MatrixNMultiply(simulator->matrixNArray, transposeJ, lambda);
 
 	for (unsigned int i = 0; i < simulator->particles->last; ++i) {
 		Particle* particle = simulator->particles->start[i];
@@ -343,7 +356,7 @@ void SimulatorUpdate(Simulator* simulator, float timestep) {
 		TraceLog(LOG_DEBUG, "λ");
 		MatrixNPrint(lambda);
 		TraceLog(LOG_DEBUG, "g λ' + f");
-		MatrixN* r = MatrixNAdd(matrixNArray, MatrixNMultiply(matrixNArray, matrices.g, lambda), matrices.f);
+		MatrixN* r = MatrixNAdd(simulator->matrixNArray, MatrixNMultiply(simulator->matrixNArray, matrices.g, lambda), matrices.f);
 		MatrixNPrint(r);
 	}
 }

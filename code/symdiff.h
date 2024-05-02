@@ -78,8 +78,6 @@ void SymbolMatrixArrayPrint(SymbolMatrixArray* array);
 
 SymbolMatrix *SymbolMatrixCreate(SymbolMatrixArray *array, unsigned int rows, unsigned int cols);
 
-void SymbolMatrixFree(SymbolMatrix* matrix);
-
 void SymbolMatrixSetNode(SymbolMatrix *matrix, unsigned int row, unsigned int col, SymbolNode *value);
 
 SymbolNode *SymbolMatrixGetNode(SymbolMatrix *matrix, unsigned int row, unsigned int col);

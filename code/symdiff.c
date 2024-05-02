@@ -137,8 +137,8 @@ SymbolNode* SymbolNodeEvaluate(SymbolNode* expression, SymbolNodeArray* array, S
 			return SymbolNodeBinary(array, expression->operation, left, right);
 		}
 		default: {
-			TraceLog(LOG_ERROR, "Unhandled operation %u", expression->operation);
-			exit(EXIT_FAILURE);
+			TraceLog(LOG_FATAL, "Unhandled operation %u", expression->operation);
+			__builtin_unreachable(); // TraceLog(LOG_FATAL, ...) exits
 		}
 	}
 }
@@ -184,7 +184,7 @@ SymbolMatrixArray* SymbolMatrixArrayCreate(SymbolNodeArray *nodeArray) {
 
 void SymbolMatrixArrayFree(SymbolMatrixArray* array) {
 	for (unsigned int i = 0; i < array->last; ++i) {
-		SymbolMatrixFree(array->start[i]);
+		free(array->start[i]);
 	}
 
 	free(array->start);
@@ -224,10 +224,6 @@ SymbolMatrix *SymbolMatrixCreate(SymbolMatrixArray *array, unsigned int rows, un
 		.rows = rows,
 	};
 	return matrix;
-}
-
-void SymbolMatrixFree(SymbolMatrix* matrix) {
-	free(matrix->values);
 }
 
 void SymbolMatrixSetNode(SymbolMatrix *matrix, unsigned int row, unsigned int col, SymbolNode *value) {
