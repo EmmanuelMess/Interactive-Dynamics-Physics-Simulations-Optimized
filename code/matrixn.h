@@ -31,6 +31,8 @@ void MatrixNFree(MatrixN * matrix);
 
 float* MatrixNGet(MatrixN * matrix, unsigned int row, unsigned int col);
 
+void MatrixNPrint(MatrixN* array);
+
 void MatrixNReshape(MatrixN * matrix, unsigned int rows, unsigned int cols);
 
 float MatrixNNorm(MatrixN * matrix);

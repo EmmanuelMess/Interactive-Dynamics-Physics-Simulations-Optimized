@@ -46,6 +46,8 @@ typedef struct ConstraintArray {
 
 
 typedef struct Simulator {
+	float ks;
+	float kd;
 	ParticleArray* particles;
 	ConstraintArray* constraints;
 	bool printData;

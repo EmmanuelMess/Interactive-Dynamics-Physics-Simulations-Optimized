@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include <raylib.h>
+#include <stdio.h>
 
 MatrixNArray* MatrixNArrayCreate() {
 	MatrixNArray* array = malloc(sizeof(MatrixNArray));
@@ -34,15 +35,12 @@ MatrixN* MatrixNArrayAdd(MatrixNArray* array) {
 	return node;
 }
 
-/*
-//TODO implement
 void MatrixNArrayPrint(MatrixNArray* array) {
-	for (unsigned int i = 0; i < array->lastPosition; ++i) {
+	for (unsigned int i = 0; i < array->last; ++i) {
 		printf("%u:\n", i);
-		SymbolNodePrint(array->start[i]);
+		MatrixNPrint(array->start[i]);
 	}
 }
-*/
 
 MatrixN* MatrixNCreate(MatrixNArray* array, unsigned int rows, unsigned int cols) {
 	MatrixN* matrix = MatrixNArrayAdd(array);
@@ -62,6 +60,21 @@ void MatrixNFree(MatrixN * matrix) {
 
 float* MatrixNGet(MatrixN * matrix, unsigned int row, unsigned int col) {
 	return &matrix->values[row * matrix->rows + col];
+}
+
+void MatrixNPrint(MatrixN* matrix) {
+	printf("[");
+	for (unsigned int i = 0; i < matrix->rows; ++i) {
+		printf("[");
+		for (unsigned int j = 0; j < matrix->cols; ++j) {
+			printf("%.6F ", *MatrixNGet(matrix, i, j));
+		}
+		printf("]");
+		if(i != matrix->rows-1) {
+			printf("\n");
+		}
+	}
+	printf("]\n");
 }
 
 void MatrixNReshape(MatrixN * matrix, unsigned int rows, unsigned int cols) {

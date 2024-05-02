@@ -39,7 +39,7 @@ int main(void) {
 	SymbolMatrix* df_dxdt = SymbolMatrixDifferentiateSymbolNode(df_dx, symbolMatrixArray, t);
 
 	*ParticleCreate(particleArray) = (Particle) {
-		.x = (Vector2) { 30.0f, 50.0f },
+		.x = (Vector2) { 30.0f, 120.0f },
 		.v = Vector2Zero(),
 		.a = Vector2Zero(),
 		.aApplied = Vector2Zero(),

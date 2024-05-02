@@ -201,13 +201,11 @@ MatrixN* ConstraintEvaluateSymbolMatrix(Constraint* constraint, SymbolNodeArray 
 // Simulator
 //----------------------------------------------------------------------------------
 
-SimulatorMatrices GetMatrices(SymbolMatrixArray *array, MatrixNArray* matrixNArray, ParticleArray* particles,
-							  ConstraintArray* constraints) {
+SimulatorMatrices GetMatrices(SymbolMatrixArray *array, MatrixNArray* matrixNArray, float ks, float kd,
+							  ParticleArray* particles, ConstraintArray* constraints) {
 	const unsigned int d = 2;
 	const unsigned int n = particles->size;
 	const unsigned int m = constraints->size;
-	const float ks = 0.1f;
-	const float kd = 0.1f * ks;
 
 	MatrixN* dq = MatrixNCreate(matrixNArray, n, d);
 	MatrixN* Q = MatrixNCreate(matrixNArray, n, d);
@@ -276,6 +274,8 @@ SimulatorMatrices GetMatrices(SymbolMatrixArray *array, MatrixNArray* matrixNArr
 
 Simulator SimulatorCreate(ParticleArray* particles, ConstraintArray* constraints, bool printData) {
 	return (Simulator) {
+		.ks = 0.1f,
+		.kd = 0.01f,
 		.particles = particles,
 		.constraints = constraints,
 		.printData = printData,
@@ -300,7 +300,8 @@ void SimulatorUpdate(Simulator* simulator, float timestep) {
 	SymbolMatrixArray* symbolMatrixArray = SymbolMatrixArrayCreate(array);
 	MatrixNArray* matrixNArray = MatrixNArrayCreate();
 
-	SimulatorMatrices matrices = GetMatrices(symbolMatrixArray, matrixNArray, simulator->particles, simulator->constraints);
+	SimulatorMatrices matrices = GetMatrices(symbolMatrixArray, matrixNArray, simulator->ks, simulator->kd,
+											 simulator->particles, simulator->constraints);
 
 	// Solve for x in g(X) * λ = -f(X)
 	MatrixN* t10 = MatrixNPseudoinverse(matrixNArray, matrices.g);
@@ -327,4 +328,22 @@ void SimulatorUpdate(Simulator* simulator, float timestep) {
 
 	simulator->error = matrices.norm;
 	simulator->time += timestep;
+
+	if(simulator->printData) {
+		TraceLog(LOG_DEBUG, "---------");
+		TraceLog(LOG_DEBUG, "t %f", simulator->time);
+		TraceLog(LOG_DEBUG, "ks %f", simulator->ks);
+		TraceLog(LOG_DEBUG, "kd %f", simulator->kd);
+		TraceLog(LOG_DEBUG, "J");
+		MatrixNPrint(matrices.J);
+		TraceLog(LOG_DEBUG, "f = dJ dq + J W Q + ks C + kd dC");
+		MatrixNPrint(matrices.f);
+		TraceLog(LOG_DEBUG, "g = J W J.T");
+		MatrixNPrint(matrices.g);
+		TraceLog(LOG_DEBUG, "λ");
+		MatrixNPrint(lambda);
+		TraceLog(LOG_DEBUG, "g λ' + f");
+		MatrixN* r = MatrixNAdd(matrixNArray, MatrixNMultiply(matrixNArray, matrices.g, lambda), matrices.f);
+		MatrixNPrint(r);
+	}
 }
