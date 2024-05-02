@@ -24,8 +24,7 @@ MatrixN* MatrixNArrayAdd(MatrixNArray* array) {
 		array->start = reallocarray(array->start, array->size, sizeof(MatrixN*));
 
 		if (array->start == NULL) {
-			TraceLog(LOG_ERROR, "No memory");
-			exit(EXIT_FAILURE);
+			TraceLog(LOG_FATAL, "No memory");
 		}
 	}
 
@@ -55,7 +54,11 @@ MatrixN* MatrixNCreate(MatrixNArray* array, unsigned int rows, unsigned int cols
 }
 
 float* MatrixNGet(MatrixN * matrix, unsigned int row, unsigned int col) {
-	return &matrix->values[row * matrix->rows + col];
+	if(row >= matrix->rows || col >= matrix->cols) {
+		TraceLog(LOG_FATAL, "Indexing nonexistent element (%u,%u), in matrix with size (%u,%u)!", row, col,
+				 matrix->rows, matrix->cols);
+	}
+	return &matrix->values[row + matrix->rows * col];
 }
 
 void MatrixNPrint(MatrixN* matrix) {

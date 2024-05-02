@@ -38,16 +38,16 @@ void testSymdiff() {
 		SymbolMatrixArray* arraySymbolMatrix = SymbolMatrixArrayCreate(array);
 
 		SymbolMatrix* a = SymbolMatrixCreate(arraySymbolMatrix, 2, 2);                 // a
-		SymbolMatrixSetNode(a, 0, 0, SymbolNodeVariable(array));
-		SymbolMatrixSetNode(a, 1, 0, SymbolNodeVariable(array));
-		SymbolMatrixSetNode(a, 0, 1, SymbolNodeVariable(array));
-		SymbolMatrixSetNode(a, 1, 1, SymbolNodeVariable(array));
+		SymbolMatrixSet(a, 0, 0, SymbolNodeVariable(array));
+		SymbolMatrixSet(a, 1, 0, SymbolNodeVariable(array));
+		SymbolMatrixSet(a, 0, 1, SymbolNodeVariable(array));
+		SymbolMatrixSet(a, 1, 1, SymbolNodeVariable(array));
 		SymbolMatrix* b = SymbolMatrixMultiplyElementWise(arraySymbolMatrix, a, a);    // a * a
 		SymbolMatrix* c = SymbolMatrixCreate(arraySymbolMatrix, 2, 2);                 // 10
-		SymbolMatrixSetNode(c, 0, 0, SymbolNodeConstant(array, 10));
-		SymbolMatrixSetNode(c, 1, 0, SymbolNodeConstant(array, 10));
-		SymbolMatrixSetNode(c, 0, 1, SymbolNodeConstant(array, 10));
-		SymbolMatrixSetNode(c, 1, 1, SymbolNodeConstant(array, 10));
+		SymbolMatrixSet(c, 0, 0, SymbolNodeConstant(array, 10));
+		SymbolMatrixSet(c, 1, 0, SymbolNodeConstant(array, 10));
+		SymbolMatrixSet(c, 0, 1, SymbolNodeConstant(array, 10));
+		SymbolMatrixSet(c, 1, 1, SymbolNodeConstant(array, 10));
 		SymbolMatrix* d = SymbolMatrixAdd(arraySymbolMatrix, b, c);                    // a * a + 10
 
 		SymbolMatrixPrint(d);

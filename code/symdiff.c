@@ -56,6 +56,10 @@ SymbolNode *SymbolNodeVariable(SymbolNodeArray *array) {
 }
 
 SymbolNode* SymbolNodeBinary(SymbolNodeArray* array, Operation operation, SymbolNode* left, SymbolNode* right) {
+	if(left == NULL || right == NULL) {
+		TraceLog(LOG_FATAL, "Tried to operate on null %u, %u!", left, right);
+	}
+
 	SymbolNode* node = NodeArrayAdd(array);
 	*node = (SymbolNode)  { .operation = operation, .data.children.left = left, .data.children.right = right };
 	return node;
@@ -63,9 +67,8 @@ SymbolNode* SymbolNodeBinary(SymbolNodeArray* array, Operation operation, Symbol
 
 SymbolNode* SymbolNodeDifferentiate(SymbolNode* expression, SymbolNodeArray* array, SymbolNode* variable) {
 	if(variable->operation != VARIABLE) {
-		TraceLog(LOG_ERROR, "Tried to differentiate against expression that is not a variable");
 		SymbolNodePrint(variable);
-		exit(EXIT_FAILURE);
+		TraceLog(LOG_FATAL, "Tried to differentiate against expression that is not a variable");
 	}
 
 	switch(expression->operation) {
@@ -226,20 +229,30 @@ SymbolMatrix *SymbolMatrixCreate(SymbolMatrixArray *array, unsigned int rows, un
 	return matrix;
 }
 
-void SymbolMatrixSetNode(SymbolMatrix *matrix, unsigned int row, unsigned int col, SymbolNode *value) {
-	matrix->values[row + col * matrix->cols] = value;
+void SymbolMatrixSet(SymbolMatrix *matrix, unsigned int row, unsigned int col, SymbolNode *value) {
+	if(row >= matrix->rows || col >= matrix->cols) {
+		TraceLog(LOG_FATAL, "Indexing nonexistent element (%u,%u), in matrix with size (%u,%u)!", row, col,
+		         matrix->rows, matrix->cols);
+	}
+
+	matrix->values[row + matrix->rows * col] = value;
 }
 
-SymbolNode *SymbolMatrixGetNode(SymbolMatrix *matrix, unsigned int row, unsigned int col) {
-	return matrix->values[row + col * matrix->cols];
+SymbolNode *SymbolMatrixGet(SymbolMatrix *matrix, unsigned int row, unsigned int col) {
+	if(row >= matrix->rows || col >= matrix->cols) {
+		TraceLog(LOG_FATAL, "Indexing nonexistent element (%u,%u), in matrix with size (%u,%u)!", row, col,
+		         matrix->rows, matrix->cols);
+	}
+
+	return matrix->values[row + matrix->rows * col];
 }
 
 SymbolMatrix* SymbolMatrixTranspose(SymbolMatrix* matrix) {
 	for (unsigned int i = 0; i < matrix->rows / 2; ++i) {
 		for (unsigned int j = 0; j < matrix->cols / 2; ++j) {
-			SymbolNode* t = SymbolMatrixGetNode(matrix, i, j);
-			SymbolMatrixSetNode(matrix, i, j, SymbolMatrixGetNode(matrix, j, i));
-			SymbolMatrixSetNode(matrix, j, i, t);
+			SymbolNode* t = SymbolMatrixGet(matrix, i, j);
+			SymbolMatrixSet(matrix, i, j, SymbolMatrixGet(matrix, j, i));
+			SymbolMatrixSet(matrix, j, i, t);
 		}
 	}
 
@@ -248,8 +261,7 @@ SymbolMatrix* SymbolMatrixTranspose(SymbolMatrix* matrix) {
 
 SymbolMatrix* SymbolMatrixAdd(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right) {
 	if(!(left->rows == right->rows && left->cols == right->cols)) {
-		TraceLog(LOG_ERROR, "Matrix dimensions don't match!");
-		exit(EXIT_FAILURE);
+		TraceLog(LOG_FATAL, "Matrix dimensions don't match!");
 	}
 
 	SymbolMatrix* matrix = SymbolMatrixCreate(array, left->rows, left->cols);
@@ -273,8 +285,7 @@ SymbolMatrix* SymbolMatrixMultiplyValue(SymbolMatrixArray* array, SymbolMatrix* 
 
 SymbolMatrix* SymbolMatrixMultiplyElementWise(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right) {
 	if(!(left->rows == right->rows && left->cols == right->cols)) {
-		TraceLog(LOG_ERROR, "Matrix dimensions don't match!");
-		exit(EXIT_FAILURE);
+		TraceLog(LOG_FATAL, "Matrix dimensions don't match!");
 	}
 
 	SymbolMatrix* matrix = SymbolMatrixCreate(array, left->rows, left->cols);
@@ -288,8 +299,7 @@ SymbolMatrix* SymbolMatrixMultiplyElementWise(SymbolMatrixArray* array, SymbolMa
 
 SymbolMatrix* SymbolMatrixMultiply(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right) {
 	if(left->cols != right->rows) {
-		TraceLog(LOG_ERROR, "Matrix dimensions don't match!");
-		exit(EXIT_FAILURE);
+		TraceLog(LOG_FATAL, "Matrix dimensions don't match!");
 	}
 
 	SymbolMatrix* sumMatrix = SymbolMatrixCreate(array, left->rows, right->cols);
@@ -299,13 +309,13 @@ SymbolMatrix* SymbolMatrixMultiply(SymbolMatrixArray* array, SymbolMatrix* left,
 			SymbolNode *r = SymbolNodeConstant(array->nodeArray, 0);
 
 			for (unsigned int k = 0; i < left->cols; ++k) {
-				SymbolNode* lNode = SymbolMatrixGetNode(left, i, k);
-				SymbolNode* rNode = SymbolMatrixGetNode(right, k, j);
+				SymbolNode* lNode = SymbolMatrixGet(left, i, k);
+				SymbolNode* rNode = SymbolMatrixGet(right, k, j);
 				SymbolNode* sum = SymbolNodeBinary(array->nodeArray, ADD, lNode, rNode);
 				r = SymbolNodeBinary(array->nodeArray, ADD, r, sum);
 			}
 
-			SymbolMatrixSetNode(sumMatrix, i, j, r);
+			SymbolMatrixSet(sumMatrix, i, j, r);
 		}
 	}
 
@@ -316,9 +326,9 @@ SymbolMatrix* SymbolNodeDifferentiateSymbolMatrix(SymbolNode* expression, Symbol
 	SymbolMatrix * result = SymbolMatrixCreate(array, variableMatrix->rows, variableMatrix->cols);
 	for (unsigned int col = 0; col < variableMatrix->cols; ++col) {
 		for (unsigned int row = 0; row < variableMatrix->rows; ++row) {
-			SymbolNode* variable = SymbolMatrixGetNode(variableMatrix, row, col);
+			SymbolNode* variable = SymbolMatrixGet(variableMatrix, row, col);
 			SymbolNode* r = SymbolNodeDifferentiate(expression, array->nodeArray, variable);
-			SymbolMatrixSetNode(result, row, col, r);
+			SymbolMatrixSet(result, row, col, r);
 		}
 	}
 	return result;
@@ -328,9 +338,9 @@ SymbolMatrix* SymbolMatrixDifferentiateSymbolNode(SymbolMatrix* expression, Symb
 	SymbolMatrix * result = SymbolMatrixCreate(array, expression->rows, expression->cols);
 	for (unsigned int col = 0; col < expression->cols; ++col) {
 		for (unsigned int row = 0; row < expression->rows; ++row) {
-			SymbolNode* valueExpression = SymbolMatrixGetNode(expression, row, col);
+			SymbolNode* valueExpression = SymbolMatrixGet(expression, row, col);
 			SymbolNode* r = SymbolNodeDifferentiate(valueExpression, array->nodeArray, variable);
-			SymbolMatrixSetNode(result, row, col, r);
+			SymbolMatrixSet(result, row, col, r);
 		}
 	}
 	return result;
@@ -340,7 +350,7 @@ void SymbolMatrixPrintInternal(SymbolMatrix* expression) {
 	for (unsigned int col = 0; col < expression->cols; ++col) {
 		for (unsigned int row = 0; row < expression->rows; ++row) {
 			printf("(%u, %u) ", row, col);
-			SymbolNode* valueExpression = SymbolMatrixGetNode(expression, row, col);
+			SymbolNode* valueExpression = SymbolMatrixGet(expression, row, col);
 			SymbolNodePrintInternal(valueExpression);
 			printf("\n");
 		}

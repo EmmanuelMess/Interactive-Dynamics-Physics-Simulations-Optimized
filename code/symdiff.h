@@ -78,9 +78,9 @@ void SymbolMatrixArrayPrint(SymbolMatrixArray* array);
 
 SymbolMatrix *SymbolMatrixCreate(SymbolMatrixArray *array, unsigned int rows, unsigned int cols);
 
-void SymbolMatrixSetNode(SymbolMatrix *matrix, unsigned int row, unsigned int col, SymbolNode *value);
+void SymbolMatrixSet(SymbolMatrix *matrix, unsigned int row, unsigned int col, SymbolNode *value);
 
-SymbolNode *SymbolMatrixGetNode(SymbolMatrix *matrix, unsigned int row, unsigned int col);
+SymbolNode *SymbolMatrixGet(SymbolMatrix *matrix, unsigned int row, unsigned int col);
 
 SymbolMatrix* SymbolMatrixTranspose(SymbolMatrix* matrix);
 

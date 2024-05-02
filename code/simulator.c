@@ -136,18 +136,18 @@ SymbolNode* constraintCircle(SymbolMatrixArray* array, SymbolNode* t, SymbolMatr
 
 	//const float distance = sum((x(t) - center) ** 2 / 2 - (radius ** 2) / 2);
 
-	SymbolMatrix* b = SymbolMatrixCreate(array, 2, 1);                                                                  // -1 * center
-	SymbolMatrixSetNode(b, 0, 0, SymbolNodeConstant(array->nodeArray, -center.x));
-	SymbolMatrixSetNode(b, 1, 0, SymbolNodeConstant(array->nodeArray, -center.y));
+	SymbolMatrix* b = SymbolMatrixCreate(array, 1, 2);                                                                  // -1 * center
+	SymbolMatrixSet(b, 0, 0, SymbolNodeConstant(array->nodeArray, -center.x));
+	SymbolMatrixSet(b, 0, 1, SymbolNodeConstant(array->nodeArray, -center.y));
 
 	SymbolMatrix* c = SymbolMatrixAdd(array, t6, b);                                                                    // x(t) - center
 	SymbolMatrix* d = SymbolMatrixMultiplyElementWise(array, c, c);                                                     // (x(t) - center) ** 2
 	SymbolMatrix* e = SymbolMatrixMultiplyValue(array, d, half);                                                        // (x(t) - center) ** 2 / 2
-	SymbolMatrix* f = SymbolMatrixCreate(array, 2, 1);                                                                  // - (radius ** 2) / 2)
-	SymbolMatrixSetNode(f, 0, 0, SymbolNodeConstant(array->nodeArray, -(radius.x * radius.x) / 2.0f));
-	SymbolMatrixSetNode(f, 1, 0, SymbolNodeConstant(array->nodeArray, -(radius.y * radius.y) / 2.0f));
+	SymbolMatrix* f = SymbolMatrixCreate(array, 1, 2);                                                                  // - (radius ** 2) / 2)
+	SymbolMatrixSet(f, 0, 0, SymbolNodeConstant(array->nodeArray, -(radius.x * radius.x) / 2.0f));
+	SymbolMatrixSet(f, 0, 1, SymbolNodeConstant(array->nodeArray, -(radius.y * radius.y) / 2.0f));
 	SymbolMatrix* g = SymbolMatrixMultiplyElementWise(array, e, f);                                                     // (x(t) - center) ** 2 / 2 - (radius ** 2) / 2
-	SymbolNode* h = SymbolNodeBinary(array->nodeArray, ADD, SymbolMatrixGetNode(g, 0, 0), SymbolMatrixGetNode(g, 1, 0));      // sum((x(t) - center) ** 2 / 2 - (radius ** 2) / 2)
+	SymbolNode* h = SymbolNodeBinary(array->nodeArray, ADD, SymbolMatrixGet(g, 0, 0), SymbolMatrixGet(g, 0, 1));// sum((x(t) - center) ** 2 / 2 - (radius ** 2) / 2)
 
 	return h;
 }
@@ -160,32 +160,22 @@ SymbolNode* constraintCircle(SymbolMatrixArray* array, SymbolNode* t, SymbolMatr
 // Then evaluate the expression
 float ConstraintEvaluateSymbolNode(Constraint* constraint, SymbolNodeArray *array, SymbolNode* expression) {
 	SymbolNode* result = expression;
-	printf("E ");
-	SymbolNodePrint(result);
 	result = SymbolNodeEvaluate(result, array, constraint->t, 0.0f);
-	printf("E t = %f ", 0.0f);
-	SymbolNodePrint(result);
 
 	for (unsigned int i = 0; i < constraint->particles->last; ++i) {
 		Particle* particle = constraint->particles->start[i];
 
 		// Set particle position
-		result = SymbolNodeEvaluate(result, array, SymbolMatrixGetNode(constraint->x, 0, i), particle->x.x);
-		result = SymbolNodeEvaluate(result, array, SymbolMatrixGetNode(constraint->x, 1, i), particle->x.y);
-		printf("E p(%f,%f) ", particle->x.x, particle->x.y);
-		SymbolNodePrint(result);
+		result = SymbolNodeEvaluate(result, array, SymbolMatrixGet(constraint->x, i, 0), particle->x.x);
+		result = SymbolNodeEvaluate(result, array, SymbolMatrixGet(constraint->x, i, 1), particle->x.y);
 
 		// Set particle velocity
-		result = SymbolNodeEvaluate(result, array, SymbolMatrixGetNode(constraint->v, 0, i), particle->v.x);
-		result = SymbolNodeEvaluate(result, array, SymbolMatrixGetNode(constraint->v, 1, i), particle->v.y);
-		printf("E v(%f,%f) ", particle->v.x, particle->v.y);
-		SymbolNodePrint(result);
+		result = SymbolNodeEvaluate(result, array, SymbolMatrixGet(constraint->v, i, 0), particle->v.x);
+		result = SymbolNodeEvaluate(result, array, SymbolMatrixGet(constraint->v, i, 1), particle->v.y);
 
 		// Set particle acceleration
-		result = SymbolNodeEvaluate(result, array, SymbolMatrixGetNode(constraint->a, 0, i), particle->a.x);
-		printf("E a(%f,%f) ", particle->a.x, particle->a.y);
-		SymbolNodePrint(result);
-		result = SymbolNodeEvaluate(result, array, SymbolMatrixGetNode(constraint->a, 1, i), particle->a.y);
+		result = SymbolNodeEvaluate(result, array, SymbolMatrixGet(constraint->a, i, 0), particle->a.x);
+		result = SymbolNodeEvaluate(result, array, SymbolMatrixGet(constraint->a, i, 1), particle->a.y);
 	}
 
 	if(result->operation != CONSTANT) {
@@ -256,8 +246,8 @@ SimulatorMatrices GetMatrices(SymbolMatrixArray *array, MatrixNArray* matrixNArr
 			Particle* particle = particles->start[j];
 
 			for (unsigned int k = 0; k < d; ++k) {
-				*MatrixNGet(J, constraint->index, particle->index + d*k) += *MatrixNGet(dc_dx, j, k);
-				*MatrixNGet(dJ, constraint->index, particle->index + d*k) += *MatrixNGet(dc_dxdt, j, k);
+				*MatrixNGet(J, constraint->index, particle->index + n*k) += *MatrixNGet(dc_dx, i, particle->index + n * k);
+				*MatrixNGet(dJ, constraint->index, particle->index + n*k) += *MatrixNGet(dc_dxdt, i, particle->index + n * k);
 			}
 		}
 	}
@@ -291,8 +281,8 @@ Simulator SimulatorCreate(SymbolNodeArray* symbolNodeArray, SymbolMatrixArray* s
 		.symbolNodeArray = symbolNodeArray,
 		.symbolMatrixArray = symbolMatrixArray,
 		.matrixNArray = matrixNArray,
-		.ks = 0.1f,
-		.kd = 0.01f,
+		.ks = 0.00001f,
+		.kd = 0.000001f,
 		.particles = particles,
 		.constraints = constraints,
 		.printData = printData,
@@ -332,8 +322,8 @@ void SimulatorUpdate(Simulator* simulator, float timestep) {
 			continue;
 		}
 
-		particle->aConstraint.x = *MatrixNGet(aConstraint, i, 0);
-		particle->aConstraint.y = *MatrixNGet(aConstraint, i, 1);
+		particle->aConstraint.x = *MatrixNGet(aConstraint, 0, i);
+		particle->aConstraint.y = *MatrixNGet(aConstraint, 1, i);
 		particle->a = Vector2Add(particle->aApplied, particle->aConstraint);
 
 		ParticleUpdate(particle, timestep);
