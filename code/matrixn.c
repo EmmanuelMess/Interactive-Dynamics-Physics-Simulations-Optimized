@@ -4,6 +4,8 @@
 #include <raylib.h>
 #include <stdio.h>
 
+#include "custom_assert.h"
+
 MatrixNArray* MatrixNArrayCreate() {
 	MatrixNArray* array = malloc(sizeof(MatrixNArray));
 	*array = (MatrixNArray) { .start = NULL, .capacity = 0, .size = 0 };
@@ -24,9 +26,7 @@ MatrixN* MatrixNArrayAdd(MatrixNArray* array) {
 		array->capacity++;
 		array->start = reallocarray(array->start, array->capacity, sizeof(MatrixN*));
 
-		if (array->start == NULL) {
-			TraceLog(LOG_FATAL, "No memory");
-		}
+		assert(array->start != NULL, "No memory");
 	}
 
 	MatrixN* matrix = malloc(sizeof(MatrixN));
@@ -59,10 +59,7 @@ void MatrixNFree(MatrixN* matrix) {
 }
 
 float* MatrixNGet(MatrixN * matrix, unsigned int row, unsigned int col) {
-	if(row >= matrix->rows || col >= matrix->cols) {
-		TraceLog(LOG_FATAL, "Indexing nonexistent element (%u,%u), in matrix with size (%u,%u)!", row, col,
-				 matrix->rows, matrix->cols);
-	}
+	assert(row < matrix->rows && col < matrix->cols, "Indexing nonexistent element!");
 	return &matrix->values[row + matrix->rows * col];
 }
 
@@ -82,10 +79,7 @@ void MatrixNPrint(MatrixN* matrix) {
 }
 
 void MatrixNReshape(MatrixN * matrix, unsigned int rows, unsigned int cols) {
-	if(matrix->rows * matrix->cols != cols * rows) {
-		TraceLog(LOG_FATAL, "Amount of elements in matrix don't match!");
-	}
-
+	assert(matrix->rows * matrix->cols == cols * rows, "Amount of elements in matrix don't match!");
 	matrix->rows = rows;
 	matrix->cols = cols;
 }
@@ -127,9 +121,7 @@ MatrixN* MatrixNNegate(MatrixNArray* array, MatrixN * matrix) {
 }
 
 MatrixN* MatrixNAdd(MatrixNArray* array, MatrixN * a,  MatrixN * b) {
-	if(a->rows != b->rows || a->cols != b->cols) {
-		TraceLog(LOG_FATAL, "Matrix dimensions don't match!");
-	}
+	assert(a->rows == b->rows && a->cols == b->cols, "Matrix dimensions don't match!");
 
 	MatrixN* result = MatrixNCreate(array, a->rows, a->cols);
 
@@ -143,10 +135,7 @@ MatrixN* MatrixNAdd(MatrixNArray* array, MatrixN * a,  MatrixN * b) {
 }
 
 MatrixN* MatrixNMultiply(MatrixNArray* array, MatrixN * a,  MatrixN * b) {
-	if(a->cols != b->rows) {
-		TraceLog(LOG_FATAL, "Matrix dimensions don't match!");
-	}
-
+	assert(a->cols == b->rows, "Matrix dimensions don't match!");
 
 	MatrixN* result = MatrixNCreate(array, a->rows, b->cols);
 
@@ -177,18 +166,14 @@ MatrixN* MatrixNMultiplyValue(MatrixNArray* array, MatrixN * matrix, float value
 }
 
 MatrixN* MatrixNInverse (MatrixNArray* array, MatrixN * matrix) {
-	if(matrix->rows != matrix->cols) {
-		TraceLog(LOG_FATAL, "Matrix is not square!");
-	}
+	assert(matrix->rows == matrix->cols, "Matrix is not square!");
 
 	MatrixN * result = MatrixNCreate(array, matrix->rows, matrix->cols);
 
 
 	// Algorithm from https://rosettacode.org/wiki/Gauss-Jordan_matrix_inversion#C
 	const unsigned int n = matrix->rows;
-	if (n < 1) {
-		TraceLog(LOG_FATAL, "Matrix is not invertible!");
-	}
+	assert(n >= 1, "Matrix is not invertible!");
 	float g;
 	float f = 0.0f;  /* Frobenius norm of a */
 	for (unsigned int i = 0; i < n; ++i) {
@@ -214,9 +199,7 @@ MatrixN* MatrixNInverse (MatrixNArray* array, MatrixN * matrix) {
 				p = i;
 			}
 		}
-		if (f < tol) {
-			TraceLog(LOG_FATAL, "Matrix is singular!");
-		}
+		assert(f >= tol, "Matrix is singular!");
 		if (p != k) {  /* Swap rows. */
 			for (unsigned int j = k; j < n; ++j) {
 				f = matrix->values[j+k*n];

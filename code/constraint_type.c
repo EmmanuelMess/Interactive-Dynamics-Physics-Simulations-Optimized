@@ -1,4 +1,5 @@
 #include "constraint_type.h"
+#include "custom_assert.h"
 
 SymbolMatrix* computePositionApproximation(SymbolMatrixArray* array, SymbolNode* t, SymbolNode* xx, SymbolNode* xy,
                                            SymbolNode* vx, SymbolNode* vy,  SymbolNode* ax, SymbolNode* ay) {
@@ -51,9 +52,7 @@ SymbolNode* constraintCircle(SymbolMatrixArray* array, SymbolNode* t, SymbolMatr
 
 Constraint* CircleConstraintCreate(ConstraintArray* constraintsArray, SymbolMatrixArray* symbolMatrixArray,
 								   ParticleArray* particlesArray, Vector2 center, Vector2 radius) {
-	if(particlesArray->size != 1) {
-		TraceLog(LOG_FATAL, "Circle constraint has incorrect number of particles!");
-	}
+	assert(particlesArray->size == 1, "Circle constraint has incorrect number of particles!");
 
 	SymbolNode* t = SymbolNodeVariable(symbolMatrixArray->nodeArray);
 	SymbolMatrix* x = SymbolMatrixCreate(symbolMatrixArray, 1, 2);
@@ -122,9 +121,7 @@ SymbolNode* ConstraintDistance(SymbolMatrixArray* array, SymbolNode* t, SymbolMa
 
 Constraint* DistanceConstraintCreate(ConstraintArray* constraintsArray, SymbolMatrixArray* symbolMatrixArray,
                                      ParticleArray* particlesArray, float distance) {
-	if(particlesArray->size != 2) {
-		TraceLog(LOG_FATAL, "Distance constraint has incorrect number of particles!");
-	}
+	assert(particlesArray->size == 2, "Circle constraint has incorrect number of particles!");
 
 	SymbolNode* t = SymbolNodeVariable(symbolMatrixArray->nodeArray);
 	SymbolMatrix* x = SymbolMatrixCreate(symbolMatrixArray, 2, 2);

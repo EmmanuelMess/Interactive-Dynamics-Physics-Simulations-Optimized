@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <raylib.h>
+#include "custom_assert.h"
 
 SymbolNodeArray* SymbolNodeArrayCreate() {
 	SymbolNodeArray* array = malloc(sizeof(SymbolNodeArray));
@@ -22,10 +23,7 @@ SymbolNode* NodeArrayAdd(SymbolNodeArray* array) {
 		array->capacity++;
 		array->start = reallocarray(array->start, array->capacity, sizeof(SymbolNode*));
 
-		if (array->start == NULL) {
-			TraceLog(LOG_ERROR, "No memory");
-			exit(EXIT_FAILURE);
-		}
+		assert(array->start != NULL, "No memory");
 	}
 
 	SymbolNode* node = malloc(sizeof(SymbolNode));
@@ -56,9 +54,8 @@ SymbolNode *SymbolNodeVariable(SymbolNodeArray *array) {
 }
 
 SymbolNode* SymbolNodeBinary(SymbolNodeArray* array, Operation operation, SymbolNode* left, SymbolNode* right) {
-	if(left == NULL || right == NULL) {
-		TraceLog(LOG_FATAL, "Tried to operate on null %u, %u!", left, right);
-	}
+	assert(left != NULL, "Tried to operate on null!");
+	assert(right != NULL, "Tried to operate on null!");
 
 	SymbolNode* node = NodeArrayAdd(array);
 	*node = (SymbolNode)  { .operation = operation, .data.children.left = left, .data.children.right = right };
@@ -66,10 +63,7 @@ SymbolNode* SymbolNodeBinary(SymbolNodeArray* array, Operation operation, Symbol
 }
 
 SymbolNode* SymbolNodeDifferentiate(SymbolNode* expression, SymbolNodeArray* array, SymbolNode* variable) {
-	if(variable->operation != VARIABLE) {
-		SymbolNodePrint(variable);
-		TraceLog(LOG_FATAL, "Tried to differentiate against expression that is not a variable");
-	}
+	assert(variable->operation == VARIABLE, "Tried to differentiate against expression that is not a variable!");
 
 	switch(expression->operation) {
 		case CONSTANT: {
@@ -107,8 +101,7 @@ SymbolNode* SymbolNodeDifferentiate(SymbolNode* expression, SymbolNodeArray* arr
 			);
 		}
 		default:
-			TraceLog(LOG_ERROR, "Unhandled operation %u", expression->operation);
-			exit(EXIT_FAILURE);
+			assert(false, "Unhandled operation!");
 	}
 }
 
@@ -140,8 +133,7 @@ SymbolNode* SymbolNodeEvaluate(SymbolNode* expression, SymbolNodeArray* array, S
 			return SymbolNodeBinary(array, expression->operation, left, right);
 		}
 		default: {
-			TraceLog(LOG_FATAL, "Unhandled operation %u", expression->operation);
-			__builtin_unreachable(); // TraceLog(LOG_FATAL, ...) exits
+			assert(false, "Unhandled operation!");
 		}
 	}
 }
@@ -165,8 +157,7 @@ void SymbolNodePrintInternal(SymbolNode* expression) {
 			SymbolNodePrintInternal(expression->data.children.right);
 			break;
 		default:
-			TraceLog(LOG_ERROR, "Unhandled operation %u", expression->operation);
-			exit(EXIT_FAILURE);
+			assert(false, "Unhandled operation!");
 	}
 }
 
@@ -202,10 +193,7 @@ SymbolMatrix* SymbolMatrixArrayAdd(SymbolMatrixArray* array) {
 		array->capacity++;
 		array->start = reallocarray(array->start, array->capacity, sizeof(SymbolNode*));
 
-		if (array->start == NULL) {
-			TraceLog(LOG_ERROR, "No memory");
-			exit(EXIT_FAILURE);
-		}
+		assert(array->start != NULL, "No memory!");
 	}
 
 
@@ -237,19 +225,13 @@ void SymbolMatrixFree(SymbolMatrix *matrix) {
 }
 
 void SymbolMatrixSet(SymbolMatrix *matrix, unsigned int row, unsigned int col, SymbolNode *value) {
-	if(row >= matrix->rows || col >= matrix->cols) {
-		TraceLog(LOG_FATAL, "Indexing nonexistent element (%u,%u), in matrix with size (%u,%u)!", row, col,
-		         matrix->rows, matrix->cols);
-	}
+	assert(row < matrix->rows && col < matrix->cols, "Indexing nonexistent element!");
 
 	matrix->values[row + matrix->rows * col] = value;
 }
 
 SymbolNode *SymbolMatrixGet(SymbolMatrix *matrix, unsigned int row, unsigned int col) {
-	if(row >= matrix->rows || col >= matrix->cols) {
-		TraceLog(LOG_FATAL, "Indexing nonexistent element (%u,%u), in matrix with size (%u,%u)!", row, col,
-		         matrix->rows, matrix->cols);
-	}
+	assert(row < matrix->rows && col < matrix->cols, "Indexing nonexistent element!");
 
 	return matrix->values[row + matrix->rows * col];
 }
@@ -267,9 +249,7 @@ SymbolMatrix* SymbolMatrixTranspose(SymbolMatrix* matrix) {
 }
 
 SymbolMatrix* SymbolMatrixAdd(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right) {
-	if(!(left->rows == right->rows && left->cols == right->cols)) {
-		TraceLog(LOG_FATAL, "Matrix dimensions don't match!");
-	}
+	assert(left->rows == right->rows && left->cols == right->cols, "Matrix dimensions don't match!");
 
 	SymbolMatrix* matrix = SymbolMatrixCreate(array, left->rows, left->cols);
 
@@ -281,9 +261,7 @@ SymbolMatrix* SymbolMatrixAdd(SymbolMatrixArray* array, SymbolMatrix* left, Symb
 }
 
 SymbolMatrix* SymbolMatrixSubtract(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right) {
-	if(!(left->rows == right->rows && left->cols == right->cols)) {
-		TraceLog(LOG_FATAL, "Matrix dimensions don't match!");
-	}
+	assert(left->rows == right->rows && left->cols == right->cols, "Matrix dimensions don't match!");
 
 	SymbolMatrix* matrix = SymbolMatrixCreate(array, left->rows, left->cols);
 
@@ -307,9 +285,8 @@ SymbolMatrix* SymbolMatrixMultiplyValue(SymbolMatrixArray* array, SymbolMatrix* 
 }
 
 SymbolMatrix* SymbolMatrixMultiplyElementWise(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right) {
-	if(!(left->rows == right->rows && left->cols == right->cols)) {
-		TraceLog(LOG_FATAL, "Matrix dimensions don't match!");
-	}
+	assert(left->rows == right->rows && left->cols == right->cols, "Matrix dimensions don't match!");
+
 
 	SymbolMatrix* matrix = SymbolMatrixCreate(array, left->rows, left->cols);
 
@@ -321,9 +298,7 @@ SymbolMatrix* SymbolMatrixMultiplyElementWise(SymbolMatrixArray* array, SymbolMa
 }
 
 SymbolMatrix* SymbolMatrixMultiply(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right) {
-	if(left->cols != right->rows) {
-		TraceLog(LOG_FATAL, "Matrix dimensions don't match!");
-	}
+	assert(left->cols == right->rows, "Matrix dimensions don't match!");
 
 	SymbolMatrix* sumMatrix = SymbolMatrixCreate(array, left->rows, right->cols);
 

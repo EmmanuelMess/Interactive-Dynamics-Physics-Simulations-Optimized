@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "symdiff.h"
+#include "custom_assert.h"
 
 //----------------------------------------------------------------------------------
 // Particle
@@ -51,10 +52,7 @@ Particle* ParticleArrayAdd(ParticleArray* array) {
 		array->capacity++;
 		array->start = reallocarray(array->start, array->capacity, sizeof(Particle*));
 
-		if (array->start == NULL) {
-			TraceLog(LOG_ERROR, "No memory");
-			exit(EXIT_FAILURE);
-		}
+		assert(array->start != NULL, "No memory!");
 	}
 
 	Particle* particle = malloc(sizeof(Particle));
@@ -109,10 +107,7 @@ Constraint* ConstraintArrayAdd(ConstraintArray* array) {
 		array->capacity++;
 		array->start = reallocarray(array->start, array->capacity, sizeof(Constraint*));
 
-		if (array->start == NULL) {
-			TraceLog(LOG_ERROR, "No memory");
-			exit(EXIT_FAILURE);
-		}
+		assert(array->start != NULL, "No memory!");
 	}
 
 	Constraint* particle = malloc(sizeof(Constraint));
@@ -156,13 +151,7 @@ float ConstraintEvaluateSymbolNode(Constraint* constraint, SymbolNodeArray *arra
 		result = SymbolNodeEvaluate(result, array, SymbolMatrixGet(constraint->a, i, 1), particle->a.y);
 	}
 
-	if(result->operation != CONSTANT) {
-		TraceLog(LOG_ERROR, "Variables are left without value");
-		SymbolNodePrint(expression);
-		SymbolNodePrint(result);
-		exit(EXIT_FAILURE);
-	}
-
+	assert(result->operation == CONSTANT, "Variables are left without value!");
 	return result->data.value;
 }
 
@@ -285,20 +274,16 @@ void SimulatorUpdate(Simulator* simulator, float timestep) {
 	SimulatorMatrices matrices = GetMatrices(symbolMatrixArray, matrixNArray, simulator->ks,
 											 simulator->kd, simulator->particles, simulator->constraints);
 
-	if(!(matrices.f->rows == simulator->constraints->size && matrices.f->cols == 1
-			&& matrices.g->rows == simulator->constraints->size && matrices.g->cols == simulator->constraints->size
-			&& matrices.J->rows == simulator->constraints->size && matrices.J->cols == simulator->particles->size * 2)) {
-		TraceLog(LOG_FATAL, "Wrong size for simulator matrices!");
-	}
+	assert(matrices.f->rows == simulator->constraints->size && matrices.f->cols == 1, "Wrong size for simulator matrices!");
+	assert(matrices.g->rows == simulator->constraints->size && matrices.g->cols == simulator->constraints->size, "Wrong size for simulator matrices!");
+	assert(matrices.J->rows == simulator->constraints->size && matrices.J->cols == simulator->particles->size * 2, "Wrong size for simulator matrices!");
 
 	// Solve for x in g(X) * λ = -f(X)
 	MatrixN* t10 = MatrixNPseudoinverse(matrixNArray, matrices.g);
 	MatrixN* t11 = MatrixNNegate(matrixNArray, matrices.f);
 	MatrixN* lambda = MatrixNMultiply(matrixNArray, t10, t11);
 
-	if(!(lambda->rows == simulator->constraints->size && lambda->cols == 1)) {
-		TraceLog(LOG_FATAL, "Wrong size for simulator matrices!");
-	}
+	assert(lambda->rows == simulator->constraints->size && lambda->cols == 1, "Wrong size for simulator matrices!");
 
 	// Solve for accelerations in J' * λ = â
 	MatrixN* transposeJ = MatrixNTranspose(matrixNArray, matrices.J);

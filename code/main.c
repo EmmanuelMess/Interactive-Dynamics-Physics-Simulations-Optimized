@@ -5,6 +5,8 @@
 #include "constraint_type.h"
 #include "math.h"
 
+#define NDEBUG 1
+
 int main(void) {
 	// Initialization
 	//--------------------------------------------------------------------------------------
