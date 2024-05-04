@@ -7,7 +7,9 @@
 #include "symdiff.h"
 #include "matrixn.h"
 
-typedef SymbolNode*(*ConstraintFunction)(SymbolMatrixArray* array, SymbolNode* t, SymbolMatrix* x, Vector2 v, Vector2 a, ...);
+//-----------------------------------------------------------------------------
+// Particle
+//-----------------------------------------------------------------------------
 
 typedef struct Particle {
 	unsigned int index; //TODO implement
@@ -21,15 +23,21 @@ typedef struct Particle {
 
 typedef struct ParticleArray {
 	Particle** start;
+	unsigned int capacity;
 	unsigned int size;
-	unsigned int last;
 } ParticleArray;
 
 ParticleArray* ParticleArrayCreate();
 
 void ParticleArrayFree(ParticleArray* particles);
 
+ParticleArray* ParticleArrayOf(unsigned int size, ...);
+
 Particle* ParticleCreate(ParticleArray* array);
+
+//-----------------------------------------------------------------------------
+// Constraint
+//-----------------------------------------------------------------------------
 
 typedef struct Constraint {
 	unsigned int index; //TODO implement
@@ -46,8 +54,8 @@ typedef struct Constraint {
 
 typedef struct ConstraintArray {
 	Constraint** start;
+	unsigned int capacity;
 	unsigned int size;
-	unsigned int last;
 } ConstraintArray;
 
 ConstraintArray* ConstraintArrayCreate();
@@ -55,6 +63,10 @@ ConstraintArray* ConstraintArrayCreate();
 void ConstraintArrayFree(ConstraintArray* particles);
 
 Constraint* ConstraintCreate(ConstraintArray* array);
+
+//-----------------------------------------------------------------------------
+// Simulator
+//-----------------------------------------------------------------------------
 
 typedef struct Simulator {
 	float ks;
@@ -72,9 +84,6 @@ typedef struct SimulatorMatrices {
 	MatrixN* J;
 	float norm;
 } SimulatorMatrices;
-
-SymbolNode* constraintCircle(SymbolMatrixArray* array, SymbolNode* t, SymbolMatrix* x, SymbolMatrix* v, SymbolMatrix* a,
-                             ...);
 
 Simulator SimulatorCreate(ParticleArray* particles, ConstraintArray* constraints, bool printData);
 

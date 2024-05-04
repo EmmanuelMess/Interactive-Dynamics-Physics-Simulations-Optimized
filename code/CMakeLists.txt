@@ -14,7 +14,9 @@ add_executable(simulator main.c
     simulator.c
     symdiff.c
     matrixn.c
-    math.c)
+    math.c
+    constraint_type.c
+    constraint_type.h)
 
 target_compile_options(simulator PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
@@ -24,7 +26,9 @@ add_executable(test test.c
     simulator.c
     symdiff.c
     matrixn.c
-    math.c)
+    math.c
+    constraint_type.c
+    constraint_type.h)
 
 target_compile_options(test PRIVATE -Wall -Wextra -Wpedantic -Werror)
 

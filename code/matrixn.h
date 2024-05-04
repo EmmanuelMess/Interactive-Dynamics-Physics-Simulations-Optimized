@@ -15,8 +15,8 @@ typedef struct MatrixN {
 
 typedef struct MatrixNArray {
 	MatrixN **start;
+	size_t capacity;
 	size_t size;
-	size_t last;
 } MatrixNArray;
 
 MatrixNArray* MatrixNArrayCreate();

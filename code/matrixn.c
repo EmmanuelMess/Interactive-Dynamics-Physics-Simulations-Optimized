@@ -6,12 +6,12 @@
 
 MatrixNArray* MatrixNArrayCreate() {
 	MatrixNArray* array = malloc(sizeof(MatrixNArray));
-	*array = (MatrixNArray) { .start = NULL, .size = 0, .last = 0 };
+	*array = (MatrixNArray) { .start = NULL, .capacity = 0, .size = 0 };
 	return array;
 }
 
 void MatrixNArrayFree(MatrixNArray* array) {
-	for (size_t i = 0; i < array->last; ++i) {
+	for (size_t i = 0; i < array->size; ++i) {
 		MatrixNFree(array->start[i]);
 		free(array->start[i]);
 	}
@@ -20,9 +20,9 @@ void MatrixNArrayFree(MatrixNArray* array) {
 }
 
 MatrixN* MatrixNArrayAdd(MatrixNArray* array) {
-	if(array->last == array->size) {
-		array->size++;
-		array->start = reallocarray(array->start, array->size, sizeof(MatrixN*));
+	if(array->size == array->capacity) {
+		array->capacity++;
+		array->start = reallocarray(array->start, array->capacity, sizeof(MatrixN*));
 
 		if (array->start == NULL) {
 			TraceLog(LOG_FATAL, "No memory");
@@ -30,13 +30,13 @@ MatrixN* MatrixNArrayAdd(MatrixNArray* array) {
 	}
 
 	MatrixN* matrix = malloc(sizeof(MatrixN));
-	array->start[array->last] = matrix;
-	array->last++;
+	array->start[array->size] = matrix;
+	array->size++;
 	return matrix;
 }
 
 void MatrixNArrayPrint(MatrixNArray* array) {
-	for (unsigned int i = 0; i < array->last; ++i) {
+	for (unsigned int i = 0; i < array->size; ++i) {
 		printf("%u:\n", i);
 		MatrixNPrint(array->start[i]);
 	}

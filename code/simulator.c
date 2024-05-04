@@ -13,14 +13,14 @@ ParticleArray* ParticleArrayCreate() {
 	ParticleArray* array = malloc(sizeof(ParticleArray));
 	*array = (ParticleArray) {
 		.start = NULL,
+		.capacity = 0,
 		.size = 0,
-		.last = 0,
 	};
 	return array;
 }
 
 void ParticleArrayFree(ParticleArray* array) {
-	for (size_t i = 0; i < array->last; ++i) {
+	for (size_t i = 0; i < array->size; ++i) {
 		//TODO ParticleFree(array->start[i]);
 		free(array->start[i]);
 	}
@@ -28,10 +28,28 @@ void ParticleArrayFree(ParticleArray* array) {
 	free(array);
 }
 
+ParticleArray* ParticleArrayOf(unsigned int size, ...) {
+	ParticleArray* array = malloc(sizeof(ParticleArray));
+	*array = (ParticleArray) {
+		.start = calloc(size, sizeof(Particle*)),
+		.capacity = size,
+		.size = size,
+	};
+
+	va_list args;
+	va_start(args, size);
+	for (unsigned int i = 0; i < size; ++i) {
+		Particle* p = va_arg(args, Particle*);
+		array->start[i] = p;
+	}
+	va_end(args);
+	return array;
+}
+
 Particle* ParticleArrayAdd(ParticleArray* array) {
-	if(array->last == array->size) {
-		array->size++;
-		array->start = reallocarray(array->start, array->size, sizeof(Particle*));
+	if(array->size == array->capacity) {
+		array->capacity++;
+		array->start = reallocarray(array->start, array->capacity, sizeof(Particle*));
 
 		if (array->start == NULL) {
 			TraceLog(LOG_ERROR, "No memory");
@@ -40,8 +58,8 @@ Particle* ParticleArrayAdd(ParticleArray* array) {
 	}
 
 	Particle* particle = malloc(sizeof(Particle));
-	array->start[array->last] = particle;
-	array->last++;
+	array->start[array->size] = particle;
+	array->size++;
 	return particle;
 }
 
@@ -72,14 +90,14 @@ ConstraintArray* ConstraintArrayCreate() {
 	ConstraintArray* array = malloc(sizeof(ConstraintArray));
 	*array = (ConstraintArray) {
 		.start = NULL,
+		.capacity = 0,
 		.size = 0,
-		.last = 0,
 	};
 	return array;
 }
 
 void ConstraintArrayFree(ConstraintArray* array) {
-	for (size_t i = 0; i < array->last; ++i) {
+	for (size_t i = 0; i < array->size; ++i) {
 		free(array->start[i]);
 	}
 	free(array->start);
@@ -87,9 +105,9 @@ void ConstraintArrayFree(ConstraintArray* array) {
 }
 
 Constraint* ConstraintArrayAdd(ConstraintArray* array) {
-	if(array->last == array->size) {
-		array->size++;
-		array->start = reallocarray(array->start, array->size, sizeof(Constraint*));
+	if(array->size == array->capacity) {
+		array->capacity++;
+		array->start = reallocarray(array->start, array->capacity, sizeof(Constraint*));
 
 		if (array->start == NULL) {
 			TraceLog(LOG_ERROR, "No memory");
@@ -98,8 +116,8 @@ Constraint* ConstraintArrayAdd(ConstraintArray* array) {
 	}
 
 	Constraint* particle = malloc(sizeof(Constraint));
-	array->start[array->last] = particle;
-	array->last++;
+	array->start[array->size] = particle;
+	array->size++;
 	return particle;
 }
 
@@ -113,46 +131,6 @@ Constraint* ConstraintCreate(ConstraintArray* array) {
 }
 
 //----------------------------------------------------------------------------------
-// Circle
-//----------------------------------------------------------------------------------
-
-SymbolNode* constraintCircle(SymbolMatrixArray* array, SymbolNode* t, SymbolMatrix* x, SymbolMatrix* v, SymbolMatrix* a,
-							 ...) {
-	va_list args;
-	va_start(args, a);
-	const Vector2 center = va_arg(args, Vector2);
-	const Vector2 radius = va_arg(args, Vector2);
-	va_end(args);
-
-	SymbolNode* half = SymbolNodeConstant(array->nodeArray, 0.5f);
-
-	SymbolMatrix* t1 = x;                                                                                               // x
-	SymbolMatrix* t2 = SymbolMatrixMultiplyValue(array, v, t);                                                          // v * t
-	SymbolNode* m1 = SymbolNodeBinary(array->nodeArray, MULTIPLY, t, t);                                                // t^2
-	SymbolMatrix* m2 = SymbolMatrixMultiplyValue(array, a, m1);                                                         // a * t^2
-	SymbolMatrix* t3 = SymbolMatrixMultiplyValue(array, m2, half);                                                      // 1/2 * a * t^2
-	SymbolMatrix* t5 = SymbolMatrixAdd(array, t1, t2);                                                                  // x + v * t
-	SymbolMatrix* t6 = SymbolMatrixAdd(array, t5, t3);                                                                  // x + v * t + 1/2 * a * t^2
-
-	//const float distance = sum((x(t) - center) ** 2 / 2 - (radius ** 2) / 2);
-
-	SymbolMatrix* b = SymbolMatrixCreate(array, 1, 2);                                                                  // -1 * center
-	SymbolMatrixSet(b, 0, 0, SymbolNodeConstant(array->nodeArray, -center.x));
-	SymbolMatrixSet(b, 0, 1, SymbolNodeConstant(array->nodeArray, -center.y));
-
-	SymbolMatrix* c = SymbolMatrixAdd(array, t6, b);                                                                    // x(t) - center
-	SymbolMatrix* d = SymbolMatrixMultiplyElementWise(array, c, c);                                                     // (x(t) - center) ** 2
-	SymbolMatrix* e = SymbolMatrixMultiplyValue(array, d, half);                                                        // (x(t) - center) ** 2 / 2
-	SymbolMatrix* f = SymbolMatrixCreate(array, 1, 2);                                                                  // - (radius ** 2) / 2)
-	SymbolMatrixSet(f, 0, 0, SymbolNodeConstant(array->nodeArray, -(radius.x * radius.x) / 2.0f));
-	SymbolMatrixSet(f, 0, 1, SymbolNodeConstant(array->nodeArray, -(radius.y * radius.y) / 2.0f));
-	SymbolMatrix* g = SymbolMatrixMultiplyElementWise(array, e, f);                                                     // (x(t) - center) ** 2 / 2 - (radius ** 2) / 2
-	SymbolNode* h = SymbolNodeBinary(array->nodeArray, ADD, SymbolMatrixGet(g, 0, 0), SymbolMatrixGet(g, 0, 1));// sum((x(t) - center) ** 2 / 2 - (radius ** 2) / 2)
-
-	return h;
-}
-
-//----------------------------------------------------------------------------------
 // Constraint
 //----------------------------------------------------------------------------------
 
@@ -162,7 +140,7 @@ float ConstraintEvaluateSymbolNode(Constraint* constraint, SymbolNodeArray *arra
 	SymbolNode* result = expression;
 	result = SymbolNodeEvaluate(result, array, constraint->t, 0.0f);
 
-	for (unsigned int i = 0; i < constraint->particles->last; ++i) {
+	for (unsigned int i = 0; i < constraint->particles->size; ++i) {
 		Particle* particle = constraint->particles->start[i];
 
 		// Set particle position
@@ -206,8 +184,8 @@ MatrixN* ConstraintEvaluateSymbolMatrix(Constraint* constraint, SymbolNodeArray 
 SimulatorMatrices GetMatrices(SymbolMatrixArray *array, MatrixNArray* matrixNArray, float ks, float kd,
 							  ParticleArray* particles, ConstraintArray* constraints) {
 	const unsigned int d = 2;
-	const unsigned int n = particles->size;
-	const unsigned int m = constraints->size;
+	const unsigned int n = particles->capacity;
+	const unsigned int m = constraints->capacity;
 
 	MatrixN* dq = MatrixNCreate(matrixNArray, n, d);
 	MatrixN* Q = MatrixNCreate(matrixNArray, n, d);
@@ -221,7 +199,7 @@ SimulatorMatrices GetMatrices(SymbolMatrixArray *array, MatrixNArray* matrixNArr
 		*MatrixNGet(W, i, i) = 1;
 	}
 
-	for (unsigned int i = 0; i < particles->last; ++i) {
+	for (unsigned int i = 0; i < particles->size; ++i) {
 		// TODO check if this should be differenciated x(t) terms
 		*MatrixNGet(dq, i, 0) = particles->start[i]->v.x;
 		*MatrixNGet(dq, i, 1) = particles->start[i]->v.y;
@@ -232,7 +210,7 @@ SimulatorMatrices GetMatrices(SymbolMatrixArray *array, MatrixNArray* matrixNArr
 	MatrixNReshape(dq, n*d, 1);
 	MatrixNReshape(Q, n*d, 1);
 
-	for (unsigned int i = 0; i < constraints->size; ++i) {
+	for (unsigned int i = 0; i < constraints->capacity; ++i) {
 		Constraint* constraint = constraints->start[i];
 
 		float c = ConstraintEvaluateSymbolNode(constraint, array->nodeArray, constraint->constraintFunction);
@@ -242,12 +220,14 @@ SimulatorMatrices GetMatrices(SymbolMatrixArray *array, MatrixNArray* matrixNArr
 
 		*MatrixNGet(C, constraint->index, 0) += c;
 		*MatrixNGet(dC, constraint->index, 0) += dc_dt;
-		for (unsigned int j = 0; j < particles->last; ++j) {
+		for (unsigned int j = 0; j < constraint->particles->size; ++j) {
 			Particle* particle = particles->start[j];
 
 			for (unsigned int k = 0; k < d; ++k) {
-				*MatrixNGet(J, constraint->index, particle->index + n*k) += *MatrixNGet(dc_dx, i, particle->index + n * k);
-				*MatrixNGet(dJ, constraint->index, particle->index + n*k) += *MatrixNGet(dc_dxdt, i, particle->index + n * k);
+				// The constraint/particle index is for the simulation, each constraint has its own (smaller) indices
+				// and has to be reindexed into the full matrix
+				*MatrixNGet(J, constraint->index, particle->index + n*k) += *MatrixNGet(dc_dx, j, k);
+				*MatrixNGet(dJ, constraint->index, particle->index + n*k) += *MatrixNGet(dc_dxdt, j, k);
 			}
 		}
 	}
@@ -291,7 +271,7 @@ void SimulatorUpdate(Simulator* simulator, float timestep) {
 	SymbolMatrixArray* symbolMatrixArray = SymbolMatrixArrayCreate();
 	MatrixNArray* matrixNArray = MatrixNArrayCreate();
 
-	for (unsigned int i = 0; i < simulator->particles->last; ++i) {
+	for (unsigned int i = 0; i < simulator->particles->size; ++i) {
 		Particle* particle = simulator->particles->start[i];
 
 		if(particle->isStatic) {
@@ -305,24 +285,35 @@ void SimulatorUpdate(Simulator* simulator, float timestep) {
 	SimulatorMatrices matrices = GetMatrices(symbolMatrixArray, matrixNArray, simulator->ks,
 											 simulator->kd, simulator->particles, simulator->constraints);
 
+	if(!(matrices.f->rows == simulator->constraints->size && matrices.f->cols == 1
+			&& matrices.g->rows == simulator->constraints->size && matrices.g->cols == simulator->constraints->size
+			&& matrices.J->rows == simulator->constraints->size && matrices.J->cols == simulator->particles->size * 2)) {
+		TraceLog(LOG_FATAL, "Wrong size for simulator matrices!");
+	}
+
 	// Solve for x in g(X) * λ = -f(X)
 	MatrixN* t10 = MatrixNPseudoinverse(matrixNArray, matrices.g);
 	MatrixN* t11 = MatrixNNegate(matrixNArray, matrices.f);
 	MatrixN* lambda = MatrixNMultiply(matrixNArray, t10, t11);
 
+	if(!(lambda->rows == simulator->constraints->size && lambda->cols == 1)) {
+		TraceLog(LOG_FATAL, "Wrong size for simulator matrices!");
+	}
+
 	// Solve for accelerations in J' * λ = â
 	MatrixN* transposeJ = MatrixNTranspose(matrixNArray, matrices.J);
 	MatrixN* aConstraint = MatrixNMultiply(matrixNArray, transposeJ, lambda);
+	MatrixNReshape(aConstraint, simulator->particles->size, 2);
 
-	for (unsigned int i = 0; i < simulator->particles->last; ++i) {
+	for (unsigned int i = 0; i < simulator->particles->size; ++i) {
 		Particle* particle = simulator->particles->start[i];
 
 		if(particle->isStatic) {
 			continue;
 		}
 
-		particle->aConstraint.x = *MatrixNGet(aConstraint, 0, i);
-		particle->aConstraint.y = *MatrixNGet(aConstraint, 1, i);
+		particle->aConstraint.x = *MatrixNGet(aConstraint, i, 0);
+		particle->aConstraint.y = *MatrixNGet(aConstraint, i, 1);
 		particle->a = Vector2Add(particle->aApplied, particle->aConstraint);
 
 		ParticleUpdate(particle, timestep);

@@ -5,12 +5,12 @@
 
 SymbolNodeArray* SymbolNodeArrayCreate() {
 	SymbolNodeArray* array = malloc(sizeof(SymbolNodeArray));
-	*array = (SymbolNodeArray) { .start = NULL, .size = 0, .last = 0};
+	*array = (SymbolNodeArray) { .start = NULL, .capacity = 0, .size = 0};
 	return array;
 }
 
 void SymbolNodeArrayFree(SymbolNodeArray* array) {
-	for (unsigned int i = 0; i < array->last; ++i) {
+	for (unsigned int i = 0; i < array->size; ++i) {
 		free(array->start[i]);
 	}
 	free(array->start);
@@ -18,9 +18,9 @@ void SymbolNodeArrayFree(SymbolNodeArray* array) {
 }
 
 SymbolNode* NodeArrayAdd(SymbolNodeArray* array) {
-	if(array->last == array->size) {
-		array->size++;
-		array->start = reallocarray(array->start, array->size, sizeof(SymbolNode*));
+	if(array->size == array->capacity) {
+		array->capacity++;
+		array->start = reallocarray(array->start, array->capacity, sizeof(SymbolNode*));
 
 		if (array->start == NULL) {
 			TraceLog(LOG_ERROR, "No memory");
@@ -29,13 +29,13 @@ SymbolNode* NodeArrayAdd(SymbolNodeArray* array) {
 	}
 
 	SymbolNode* node = malloc(sizeof(SymbolNode));
-	array->start[array->last] = node;
-	array->last++;
+	array->start[array->size] = node;
+	array->size++;
 	return node;
 }
 
 void SymbolNodeArrayPrint(SymbolNodeArray* array) {
-	for (unsigned int i = 0; i < array->last; ++i) {
+	for (unsigned int i = 0; i < array->size; ++i) {
 		printf("%u:\n", i);
 		SymbolNodePrint(array->start[i]);
 	}
@@ -181,14 +181,14 @@ void SymbolNodePrint(SymbolNode* expression) {
 
 SymbolMatrixArray* SymbolMatrixArrayCreate() {
 	SymbolMatrixArray* array = malloc(sizeof(SymbolMatrixArray));
-	*array = (SymbolMatrixArray) { .start = NULL, .nodeArray = SymbolNodeArrayCreate(), .size = 0, .last = 0};
+	*array = (SymbolMatrixArray) { .start = NULL, .nodeArray = SymbolNodeArrayCreate(), .capacity = 0, .size = 0};
 	return array;
 }
 
 void SymbolMatrixArrayFree(SymbolMatrixArray* array) {
 	SymbolNodeArrayFree(array->nodeArray);
 
-	for (unsigned int i = 0; i < array->last; ++i) {
+	for (unsigned int i = 0; i < array->size; ++i) {
 		SymbolMatrixFree(array->start[i]);
 		free(array->start[i]);
 	}
@@ -198,9 +198,9 @@ void SymbolMatrixArrayFree(SymbolMatrixArray* array) {
 }
 
 SymbolMatrix* SymbolMatrixArrayAdd(SymbolMatrixArray* array) {
-	if(array->last == array->size) {
-		array->size++;
-		array->start = reallocarray(array->start, array->size, sizeof(SymbolNode*));
+	if(array->size == array->capacity) {
+		array->capacity++;
+		array->start = reallocarray(array->start, array->capacity, sizeof(SymbolNode*));
 
 		if (array->start == NULL) {
 			TraceLog(LOG_ERROR, "No memory");
@@ -210,13 +210,13 @@ SymbolMatrix* SymbolMatrixArrayAdd(SymbolMatrixArray* array) {
 
 
 	SymbolMatrix* matrix = malloc(sizeof(SymbolMatrix));
-	array->start[array->last] = matrix;
-	array->last++;
+	array->start[array->size] = matrix;
+	array->size++;
 	return matrix;
 }
 
 void SymbolMatrixArrayPrint(SymbolMatrixArray* array) {
-	for (unsigned int i = 0; i < array->last; ++i) {
+	for (unsigned int i = 0; i < array->size; ++i) {
 		printf("%u:\n", i);
 		SymbolMatrixPrint(array->start[i]);
 	}
@@ -275,6 +275,22 @@ SymbolMatrix* SymbolMatrixAdd(SymbolMatrixArray* array, SymbolMatrix* left, Symb
 
 	for (unsigned int i = 0; i < left->rows * left->cols; ++i) {
 		matrix->values[i] = SymbolNodeBinary(array->nodeArray, ADD, left->values[i], right->values[i]);
+	}
+
+	return matrix;
+}
+
+SymbolMatrix* SymbolMatrixSubtract(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right) {
+	if(!(left->rows == right->rows && left->cols == right->cols)) {
+		TraceLog(LOG_FATAL, "Matrix dimensions don't match!");
+	}
+
+	SymbolMatrix* matrix = SymbolMatrixCreate(array, left->rows, left->cols);
+
+	for (unsigned int i = 0; i < left->rows * left->cols; ++i) {
+		// TODO define an operation SymbolNodeBinary SUBTRACT
+		SymbolNode* t = SymbolNodeBinary(array->nodeArray, MULTIPLY, SymbolNodeConstant(array->nodeArray, -1), right->values[i]);
+		matrix->values[i] = SymbolNodeBinary(array->nodeArray, ADD, left->values[i], t);
 	}
 
 	return matrix;

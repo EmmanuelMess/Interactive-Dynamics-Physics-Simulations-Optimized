@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "simulator.h"
+#include "constraint_type.h"
 #include "math.h"
 
 int main(void) {
@@ -16,30 +17,12 @@ int main(void) {
 
 	SymbolMatrixArray* symbolMatrixArray = SymbolMatrixArrayCreate();
 	MatrixNArray* matrixNArray = MatrixNArrayCreate();
-	ParticleArray* particleArray = ParticleArrayCreate();
-	ConstraintArray* constraintArray = ConstraintArrayCreate();
+	ParticleArray* allParticlesArray = ParticleArrayCreate();
+	ConstraintArray* allConstraintsArray = ConstraintArrayCreate();
 
-	SymbolNode* t = SymbolNodeVariable(symbolMatrixArray->nodeArray);
-	SymbolMatrix* x = SymbolMatrixCreate(symbolMatrixArray, 1, 2);
-	SymbolMatrixSet(x, 0, 0, SymbolNodeVariable(symbolMatrixArray->nodeArray));
-	SymbolMatrixSet(x, 0, 1, SymbolNodeVariable(symbolMatrixArray->nodeArray));
-	SymbolMatrix* v = SymbolMatrixCreate(symbolMatrixArray, 1, 2);
-	SymbolMatrixSet(v, 0, 0, SymbolNodeVariable(symbolMatrixArray->nodeArray));
-	SymbolMatrixSet(v, 0, 1, SymbolNodeVariable(symbolMatrixArray->nodeArray));
-	SymbolMatrix* a = SymbolMatrixCreate(symbolMatrixArray, 1, 2);
-	SymbolMatrixSet(a, 0, 0, SymbolNodeVariable(symbolMatrixArray->nodeArray));
-	SymbolMatrixSet(a, 0, 1, SymbolNodeVariable(symbolMatrixArray->nodeArray));
-
-	const Vector2 center = (Vector2) { .x = 200.0f, .y = 200.0f };
-	const Vector2 radius = (Vector2) { .x = 100.0f, .y = 100.0f };
-
-	SymbolNode* f = constraintCircle(symbolMatrixArray, t, x, v, a, center, radius);
-	SymbolNode* df_dt = SymbolNodeDifferentiate(f, symbolMatrixArray->nodeArray, t);
-	SymbolMatrix* df_dx = SymbolNodeDifferentiateSymbolMatrix(f, symbolMatrixArray, x);
-	SymbolMatrix* df_dxdt = SymbolMatrixDifferentiateSymbolNode(df_dx, symbolMatrixArray, t);
-
-	*ParticleCreate(particleArray) = (Particle) {
-		.x = (Vector2) { 30.0f, 120.0f },
+	Particle* particle1 = ParticleCreate(allParticlesArray);
+	*particle1 = (Particle) {
+		.x = (Vector2) { 320.0f, 320.0f },
 		.v = Vector2Zero(),
 		.a = Vector2Zero(),
 		.aApplied = Vector2Zero(),
@@ -47,19 +30,28 @@ int main(void) {
 		.isStatic = false,
 	};
 
-	*ConstraintCreate(constraintArray) = (Constraint) {
-		.particles = particleArray,
-		.t = t,
-		.x = x,
-		.v = v,
-		.a = a,
-		.constraintFunction = f,
-		.constraintFunction_dt = df_dt,
-		.constraintFunction_dx = df_dx,
-		.constraintFunction_dxdt = df_dxdt,
+	Particle* particle2 = ParticleCreate(allParticlesArray);
+	*particle2 = (Particle) {
+		.x = (Vector2) { 40.0f, 120.0f },
+		.v = Vector2Zero(),
+		.a = Vector2Zero(),
+		.aApplied = Vector2Zero(),
+		.aConstraint = Vector2Zero(),
+		.isStatic = false,
 	};
 
-	Simulator simulator = SimulatorCreate(particleArray, constraintArray, true);
+	//const Vector2 center1 = (Vector2) { .x = 200.0f, .y = 200.0f };
+	//const Vector2 radius1 = (Vector2) { .x = 50.0f, .y = 50.0f };
+	//CircleConstraintCreate(allConstraintsArray, symbolMatrixArray, ParticleArrayOf(1, particle1), center1, radius1);
+
+	//const Vector2 center2 = (Vector2) { .x = 250.0f, .y = 200.0f };
+	//const Vector2 radius2 = (Vector2) { .x = 50.0f, .y = 50.0f };
+	//CircleConstraintCreate(allConstraintsArray, symbolMatrixArray, ParticleArrayOf(1, particle1), center2, radius2);
+
+	const float distance = 10.0f;
+	DistanceConstraintCreate(allConstraintsArray, symbolMatrixArray, ParticleArrayOf(2, particle1, particle2), distance);
+
+	Simulator simulator = SimulatorCreate(allParticlesArray, allConstraintsArray, true);
 
 	const int FONT_SIZE = 11;
 
@@ -72,7 +64,7 @@ int main(void) {
 
 		const double updateTimeStartMs = GetTime() * 1000;
 
-		SimulatorUpdate(&simulator, 0.00005f);
+		SimulatorUpdate(&simulator, 0.0001f);
 
 		const double updateTimeEndMs = GetTime() * 1000;
 
@@ -90,13 +82,15 @@ int main(void) {
 		DrawText(TextFormat("error %f", simulator.error), 5, 5+1*15, FONT_SIZE, BLACK);
 		DrawText(TextFormat("ΔT %.3fms", updateTimeEndMs - updateTimeStartMs), 5, 5+2*15, FONT_SIZE, BLACK);
 
-		DrawEllipseLines(iroundf(center.x), iroundf(center.y), radius.x, radius.y, LIGHTGRAY);
+		//DrawEllipseLines(iroundf(center1.x), iroundf(center1.y), radius1.x, radius1.y, LIGHTGRAY);
+		//DrawEllipseLines(iroundf(center2.x), iroundf(center2.y), radius2.x, radius2.y, LIGHTGRAY);
+		DrawLine(iroundf(particle1->x.x), iroundf(particle1->x.y), iroundf(particle2->x.x), iroundf(particle2->x.y), LIGHTGRAY);
 
-		for(unsigned int i = 0; i < particleArray->last; i++) {
-			Particle *particle = particleArray->start[i];
+		for(unsigned int i = 0; i < allParticlesArray->size; i++) {
+			Particle *particle = allParticlesArray->start[i];
 			const char * text = TextFormat("p %u\n  x [%-.6F %.6F]\n  v [%-.6F %.6F]\n  a [%-.6F %.6F]",
 								i, particle->x.x, particle->x.y, particle->v.x, particle->v.y, particle->a.x, particle->a.y);
-			DrawText(text, 5, 5+3*15+i*15, FONT_SIZE, BLACK);
+			DrawText(text, 5, 5+3*15+i*4*15, FONT_SIZE, BLACK);
 
 			DrawCircle(iroundf(particle->x.x), iroundf(particle->x.y), 4, particle->isStatic? RED:BLUE);
 			DrawLine(iroundf(particle->x.x), iroundf(particle->x.y),
@@ -117,8 +111,8 @@ int main(void) {
 	//--------------------------------------------------------------------------------------
 	SymbolMatrixArrayFree(symbolMatrixArray);
 	MatrixNArrayFree(matrixNArray);
-	ParticleArrayFree(particleArray);
-	ConstraintArrayFree(constraintArray);
+	ParticleArrayFree(allParticlesArray);
+	ConstraintArrayFree(allConstraintsArray);
 
 	CloseWindow();
 	//--------------------------------------------------------------------------------------

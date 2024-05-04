@@ -30,8 +30,8 @@ typedef struct SymbolNode {
 
 typedef struct SymbolNodeArray {
 	SymbolNode **start;
+	size_t capacity;
 	size_t size;
-	size_t last;
 } SymbolNodeArray;
 
 SymbolNodeArray* SymbolNodeArrayCreate();
@@ -41,6 +41,8 @@ void SymbolNodeArrayFree(SymbolNodeArray* array);
 void SymbolNodeArrayPrint(SymbolNodeArray* array);
 
 SymbolNode* SymbolNodeConstant(SymbolNodeArray* array, float value);
+
+SymbolNode *SymbolNodeVariable(SymbolNodeArray *array);
 
 SymbolNode *SymbolNodeVariable(SymbolNodeArray *array);
 
@@ -65,8 +67,8 @@ typedef struct SymbolMatrix {
 typedef struct SymbolMatrixArray {
 	SymbolMatrix **start;
 	SymbolNodeArray *nodeArray;
+	size_t capacity;
 	size_t size;
-	size_t last;
 } SymbolMatrixArray;
 
 
@@ -87,6 +89,8 @@ SymbolNode *SymbolMatrixGet(SymbolMatrix *matrix, unsigned int row, unsigned int
 SymbolMatrix* SymbolMatrixTranspose(SymbolMatrix* matrix);
 
 SymbolMatrix* SymbolMatrixAdd(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right);
+
+SymbolMatrix* SymbolMatrixSubtract(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right);
 
 SymbolMatrix* SymbolMatrixMultiplyValue(SymbolMatrixArray* array, SymbolMatrix* left, SymbolNode* right);
 
