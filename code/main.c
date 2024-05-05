@@ -13,8 +13,8 @@ int main(void) {
 	//--------------------------------------------------------------------------------------
 	SetTraceLogLevel(LOG_ALL);
 
-	const int screenWidth = 800;
-	const int screenHeight = 450;
+	const int screenWidth = 450;
+	const int screenHeight = screenWidth;
 
 	InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
 
@@ -35,7 +35,7 @@ int main(void) {
 
 		const double updateTimeStartMs = GetTime() * 1000;
 
-		SimulatorUpdate(&simulator, 0.0001f);
+		SimulatorUpdate(&simulator, 0.000001f);
 
 		const double updateTimeEndMs = GetTime() * 1000;
 
