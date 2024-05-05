@@ -13,5 +13,6 @@ Constraint* CircleConstraintCreate(ConstraintArray* constraintsArray, SymbolMatr
 Constraint* DistanceConstraintCreate(ConstraintArray* constraintsArray, SymbolMatrixArray* symbolMatrixArray,
                                    ParticleArray* particlesArray, float distance);
 
+void ConstraintDraw(Constraint* constraint);
 
 #endif //SIMULATOR_CONSTRAINT_TYPE_H

@@ -12,7 +12,7 @@
 //-----------------------------------------------------------------------------
 
 typedef struct Particle {
-	unsigned int index; //TODO implement
+	unsigned int index;
 	Vector2 x;
 	Vector2 v;
 	Vector2 a;
@@ -39,17 +39,36 @@ Particle* ParticleCreate(ParticleArray* array, Vector2 x, bool isStatic);
 // Constraint
 //-----------------------------------------------------------------------------
 
+typedef enum ConstraintType {
+	CIRCLE,
+	DISTANCE,
+} ConstraintType;
+
 typedef struct Constraint {
-	unsigned int index; //TODO implement
+	ConstraintType type;
+	unsigned int index;
+
 	ParticleArray* particles;
+
 	SymbolNode* t;
 	SymbolMatrix* x;
 	SymbolMatrix* v;
 	SymbolMatrix* a;
+
 	SymbolNode* constraintFunction;
 	SymbolNode* constraintFunction_dt;
 	SymbolMatrix* constraintFunction_dx;
 	SymbolMatrix* constraintFunction_dxdt;
+
+	union {
+		struct {
+			Vector2 center;
+			Vector2 radius;
+		} circle;
+		struct {
+			float distance;
+		} distance;
+	} metadata;
 } Constraint;
 
 typedef struct ConstraintArray {
@@ -62,9 +81,9 @@ ConstraintArray* ConstraintArrayCreate();
 
 void ConstraintArrayFree(ConstraintArray* particles);
 
-Constraint* ConstraintCreate(ConstraintArray* array, ParticleArray* particlesArray, SymbolNode* t, SymbolMatrix* x,
-                             SymbolMatrix* v, SymbolMatrix* a, SymbolNode* f, SymbolNode* df_dt, SymbolMatrix* df_dx,
-                             SymbolMatrix* df_dxdt);
+Constraint* ConstraintCreate(ConstraintArray* array, ParticleArray* particlesArray, ConstraintType type, SymbolNode* t,
+                             SymbolMatrix* x, SymbolMatrix* v, SymbolMatrix* a, SymbolNode* f, SymbolNode* df_dt,
+                             SymbolMatrix* df_dx, SymbolMatrix* df_dxdt);
 
 //-----------------------------------------------------------------------------
 // Simulator

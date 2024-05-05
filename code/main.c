@@ -53,9 +53,10 @@ int main(void) {
 		DrawText(TextFormat("error %f", simulator.error), 5, 5+1*15, FONT_SIZE, BLACK);
 		DrawText(TextFormat("ΔT %.3fms", updateTimeEndMs - updateTimeStartMs), 5, 5+2*15, FONT_SIZE, BLACK);
 
-		//DrawEllipseLines(iroundf(center1.x), iroundf(center1.y), radius1.x, radius1.y, LIGHTGRAY);
-		//DrawEllipseLines(iroundf(center2.x), iroundf(center2.y), radius2.x, radius2.y, LIGHTGRAY);
-		//DrawLine(iroundf(particle1->x.x), iroundf(particle1->x.y), iroundf(particle2->x.x), iroundf(particle2->x.y), LIGHTGRAY);
+		for (unsigned int i = 0; i < allConstraintsArray->size; ++i) {
+			Constraint * constraint = allConstraintsArray->start[i];
+			ConstraintDraw(constraint);
+		}
 
 		for(unsigned int i = 0; i < allParticlesArray->size; i++) {
 			Particle *particle = allParticlesArray->start[i];

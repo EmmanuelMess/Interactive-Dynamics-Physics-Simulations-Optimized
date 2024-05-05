@@ -119,10 +119,11 @@ Constraint* ConstraintArrayAdd(ConstraintArray* array) {
 	return particle;
 }
 
-Constraint* ConstraintCreate(ConstraintArray* array, ParticleArray* particlesArray, SymbolNode* t, SymbolMatrix* x,
-                             SymbolMatrix* v, SymbolMatrix* a, SymbolNode* f, SymbolNode* df_dt, SymbolMatrix* df_dx,
-							 SymbolMatrix* df_dxdt) {
+Constraint* ConstraintCreate(ConstraintArray* array, ParticleArray* particlesArray, ConstraintType type, SymbolNode* t,
+							 SymbolMatrix* x, SymbolMatrix* v, SymbolMatrix* a, SymbolNode* f, SymbolNode* df_dt,
+							 SymbolMatrix* df_dx, SymbolMatrix* df_dxdt) {
 	Constraint* constraint = ConstraintArrayAdd(array);
+	constraint->type = type;
 	constraint->index = array->size - 1;
 	constraint->particles = particlesArray;
 	constraint->t = t;
