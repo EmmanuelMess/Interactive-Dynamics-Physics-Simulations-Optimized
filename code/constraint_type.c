@@ -70,18 +70,7 @@ Constraint* CircleConstraintCreate(ConstraintArray* constraintsArray, SymbolMatr
 	SymbolMatrix* df_dx = SymbolNodeDifferentiateSymbolMatrix(f, symbolMatrixArray, x);
 	SymbolMatrix* df_dxdt = SymbolMatrixDifferentiateSymbolNode(df_dx, symbolMatrixArray, t);
 
-	Constraint* constraint = ConstraintCreate(constraintsArray);
-	*constraint = (Constraint) {
-		.particles = particlesArray,
-		.t = t,
-		.x = x,
-		.v = v,
-		.a = a,
-		.constraintFunction = f,
-		.constraintFunction_dt = df_dt,
-		.constraintFunction_dx = df_dx,
-		.constraintFunction_dxdt = df_dxdt,
-	};
+	Constraint* constraint = ConstraintCreate(constraintsArray, particlesArray, t, x, v, a, f, df_dt, df_dx, df_dxdt);
 
 	return constraint;
 }
@@ -145,18 +134,7 @@ Constraint* DistanceConstraintCreate(ConstraintArray* constraintsArray, SymbolMa
 	SymbolMatrix* df_dx = SymbolNodeDifferentiateSymbolMatrix(f, symbolMatrixArray, x);
 	SymbolMatrix* df_dxdt = SymbolMatrixDifferentiateSymbolNode(df_dx, symbolMatrixArray, t);
 
-	Constraint* constraint = ConstraintCreate(constraintsArray);
-	*constraint = (Constraint) {
-		.particles = particlesArray,
-		.t = t,
-		.x = x,
-		.v = v,
-		.a = a,
-		.constraintFunction = f,
-		.constraintFunction_dt = df_dt,
-		.constraintFunction_dx = df_dx,
-		.constraintFunction_dxdt = df_dxdt,
-	};
+	Constraint* constraint = ConstraintCreate(constraintsArray, particlesArray, t, x, v, a, f, df_dt, df_dx, df_dxdt);
 
 	return constraint;
 }

@@ -61,12 +61,15 @@ Particle* ParticleArrayAdd(ParticleArray* array) {
 	return particle;
 }
 
-Particle* ParticleCreate(ParticleArray* array) {
-	static unsigned int index = 0;
-
+Particle* ParticleCreate(ParticleArray* array, Vector2 x, bool isStatic) {
 	Particle* particle = ParticleArrayAdd(array);
-	particle->index = index;
-	index++;
+	particle->index = array->size-1;
+	particle->x = x;
+	particle->v = Vector2Zero();
+	particle->a = Vector2Zero();
+	particle->aApplied = Vector2Zero();
+	particle->aConstraint = Vector2Zero();
+	particle->isStatic = isStatic;
 	return particle;
 }
 
@@ -116,13 +119,21 @@ Constraint* ConstraintArrayAdd(ConstraintArray* array) {
 	return particle;
 }
 
-Constraint* ConstraintCreate(ConstraintArray* array) {
-	static unsigned int index = 0;
-
-	Constraint* particle = ConstraintArrayAdd(array);
-	particle->index = index;
-	index++;
-	return particle;
+Constraint* ConstraintCreate(ConstraintArray* array, ParticleArray* particlesArray, SymbolNode* t, SymbolMatrix* x,
+                             SymbolMatrix* v, SymbolMatrix* a, SymbolNode* f, SymbolNode* df_dt, SymbolMatrix* df_dx,
+							 SymbolMatrix* df_dxdt) {
+	Constraint* constraint = ConstraintArrayAdd(array);
+	constraint->index = array->size - 1;
+	constraint->particles = particlesArray;
+	constraint->t = t;
+	constraint->x = x;
+	constraint->v = v;
+	constraint->a = a;
+	constraint->constraintFunction = f;
+	constraint->constraintFunction_dt = df_dt;
+	constraint->constraintFunction_dx = df_dx;
+	constraint->constraintFunction_dxdt = df_dxdt;
+	return constraint;
 }
 
 //----------------------------------------------------------------------------------
@@ -176,8 +187,8 @@ SimulatorMatrices GetMatrices(SymbolMatrixArray *array, MatrixNArray* matrixNArr
 	const unsigned int n = particles->capacity;
 	const unsigned int m = constraints->capacity;
 
-	MatrixN* dq = MatrixNCreate(matrixNArray, n, d);
-	MatrixN* Q = MatrixNCreate(matrixNArray, n, d);
+	MatrixN* dq = MatrixNCreate(matrixNArray, n*d, 1);
+	MatrixN* Q = MatrixNCreate(matrixNArray, n*d, 1);
 	MatrixN* C = MatrixNCreate(matrixNArray, m, 1);
 	MatrixN* dC = MatrixNCreate(matrixNArray, m, 1);
 	MatrixN* W = MatrixNCreate(matrixNArray, n * d, n * d);
@@ -190,50 +201,52 @@ SimulatorMatrices GetMatrices(SymbolMatrixArray *array, MatrixNArray* matrixNArr
 
 	for (unsigned int i = 0; i < particles->size; ++i) {
 		// TODO check if this should be differenciated x(t) terms
-		*MatrixNGet(dq, i, 0) = particles->start[i]->v.x;
-		*MatrixNGet(dq, i, 1) = particles->start[i]->v.y;
-		*MatrixNGet(Q, i, 0) = particles->start[i]->a.x;
-		*MatrixNGet(Q, i, 1) = particles->start[i]->a.y;
+		*MatrixNGet(dq, i+n*0, 0) = particles->start[i]->v.x;
+		*MatrixNGet(dq, i+n*1, 0) = particles->start[i]->v.y;
+		*MatrixNGet(Q, i+n*0, 0) = particles->start[i]->a.x;
+		*MatrixNGet(Q, i+n*1, 0) = particles->start[i]->a.y;
 	}
 
-	MatrixNReshape(dq, n*d, 1);
-	MatrixNReshape(Q, n*d, 1);
-
-	for (unsigned int i = 0; i < constraints->capacity; ++i) {
+	for (unsigned int i = 0; i < constraints->size; ++i) {
 		Constraint* constraint = constraints->start[i];
 
 		float c = ConstraintEvaluateSymbolNode(constraint, array->nodeArray, constraint->constraintFunction);
 		float dc_dt = ConstraintEvaluateSymbolNode(constraint, array->nodeArray, constraint->constraintFunction_dt);
-		MatrixN* dc_dx = ConstraintEvaluateSymbolMatrix(constraint, array->nodeArray,  matrixNArray, constraint->constraintFunction_dx);
-		MatrixN* dc_dxdt = ConstraintEvaluateSymbolMatrix(constraint, array->nodeArray, matrixNArray, constraint->constraintFunction_dxdt);
+		MatrixN* dc_dx = ConstraintEvaluateSymbolMatrix(constraint, array->nodeArray,  matrixNArray,
+														constraint->constraintFunction_dx);
+		MatrixN* dc_dxdt = ConstraintEvaluateSymbolMatrix(constraint, array->nodeArray, matrixNArray,
+														  constraint->constraintFunction_dxdt);
 
 		*MatrixNGet(C, constraint->index, 0) += c;
 		*MatrixNGet(dC, constraint->index, 0) += dc_dt;
 		for (unsigned int j = 0; j < constraint->particles->size; ++j) {
-			Particle* particle = particles->start[j];
+			Particle* constrainedParticle = constraint->particles->start[j];
 
 			for (unsigned int k = 0; k < d; ++k) {
 				// The constraint/particle index is for the simulation, each constraint has its own (smaller) indices
 				// and has to be reindexed into the full matrix
-				*MatrixNGet(J, constraint->index, particle->index + n*k) += *MatrixNGet(dc_dx, j, k);
-				*MatrixNGet(dJ, constraint->index, particle->index + n*k) += *MatrixNGet(dc_dxdt, j, k);
+				*MatrixNGet(J, constraint->index, constrainedParticle->index + n * k) += *MatrixNGet(dc_dx, j, k);
+				*MatrixNGet(dJ, constraint->index, constrainedParticle->index + n * k) += *MatrixNGet(dc_dxdt, j, k);
 			}
 		}
 	}
 
-	// Compute f(X) = dJdq + J W Q + ks C + kd dC; g(X) = J W J'
-	MatrixN* t1 = MatrixNMultiply(matrixNArray, dJ, dq); // dJ dq
-	MatrixN* t2 = MatrixNMultiply(matrixNArray, J, W); // J W
-	MatrixN* t3 = MatrixNMultiply(matrixNArray, t2, Q); // J W Q
-	MatrixN* t4 = MatrixNMultiplyValue(matrixNArray, C, ks); // ks C
-	MatrixN* t5 = MatrixNMultiplyValue(matrixNArray, dC, kd); // kd dC
-	MatrixN* t6 = MatrixNAdd(matrixNArray, t1, t3); // dJ dq + J W Q
-	MatrixN* t7 = MatrixNAdd(matrixNArray, t6, t4); // dJ dq + J W Q + ks C
-	MatrixN* f = MatrixNAdd(matrixNArray, t7, t5); // dJ dq + J W Q + ks C + kd dC
+	MatrixNPrint(J);
 
-	MatrixN* t8 = MatrixNMultiply(matrixNArray, J, W); // J W
-	MatrixN* t9 = MatrixNTranspose(matrixNArray, J); // J'
-	MatrixN* g = MatrixNMultiply(matrixNArray, t8, t9); // J W J'
+	// Compute f(X) = dJdq + J W Q + ks C + kd dC
+	MatrixN* t1 = MatrixNMultiply(matrixNArray, dJ, dq);                          // dJ dq
+	MatrixN* t2 = MatrixNMultiply(matrixNArray, J, W);                            // J W
+	MatrixN* t3 = MatrixNMultiply(matrixNArray, t2, Q);                           // J W Q
+	MatrixN* t4 = MatrixNMultiplyValue(matrixNArray, C, ks);                      // ks C
+	MatrixN* t5 = MatrixNMultiplyValue(matrixNArray, dC, kd);                     // kd dC
+	MatrixN* t6 = MatrixNAdd(matrixNArray, t1, t3);                               // dJ dq + J W Q
+	MatrixN* t7 = MatrixNAdd(matrixNArray, t6, t4);                               // dJ dq + J W Q + ks C
+	MatrixN* f = MatrixNAdd(matrixNArray, t7, t5);                                // dJ dq + J W Q + ks C + kd dC
+
+	// Compute g(X) = J W J'
+	MatrixN* t8 = MatrixNMultiply(matrixNArray, J, W);                            // J W
+	MatrixN* t9 = MatrixNTranspose(matrixNArray, J);                              // J'
+	MatrixN* g = MatrixNMultiply(matrixNArray, t8, t9);                           // J W J'
 
 	return (SimulatorMatrices) {
 		.f = f,

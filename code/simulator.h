@@ -33,7 +33,7 @@ void ParticleArrayFree(ParticleArray* particles);
 
 ParticleArray* ParticleArrayOf(unsigned int size, ...);
 
-Particle* ParticleCreate(ParticleArray* array);
+Particle* ParticleCreate(ParticleArray* array, Vector2 x, bool isStatic);
 
 //-----------------------------------------------------------------------------
 // Constraint
@@ -62,7 +62,9 @@ ConstraintArray* ConstraintArrayCreate();
 
 void ConstraintArrayFree(ConstraintArray* particles);
 
-Constraint* ConstraintCreate(ConstraintArray* array);
+Constraint* ConstraintCreate(ConstraintArray* array, ParticleArray* particlesArray, SymbolNode* t, SymbolMatrix* x,
+                             SymbolMatrix* v, SymbolMatrix* a, SymbolNode* f, SymbolNode* df_dt, SymbolMatrix* df_dx,
+                             SymbolMatrix* df_dxdt);
 
 //-----------------------------------------------------------------------------
 // Simulator

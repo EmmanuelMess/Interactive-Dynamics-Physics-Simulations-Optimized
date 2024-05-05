@@ -4,6 +4,7 @@
 #include "simulator.h"
 #include "constraint_type.h"
 #include "math.h"
+#include "cases.h"
 
 #define NDEBUG 1
 
@@ -18,42 +19,10 @@ int main(void) {
 	InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
 
 	SymbolMatrixArray* symbolMatrixArray = SymbolMatrixArrayCreate();
-	MatrixNArray* matrixNArray = MatrixNArrayCreate();
 	ParticleArray* allParticlesArray = ParticleArrayCreate();
 	ConstraintArray* allConstraintsArray = ConstraintArrayCreate();
 
-	Particle* particle1 = ParticleCreate(allParticlesArray);
-	*particle1 = (Particle) {
-		.x = (Vector2) { 320.0f, 320.0f },
-		.v = Vector2Zero(),
-		.a = Vector2Zero(),
-		.aApplied = Vector2Zero(),
-		.aConstraint = Vector2Zero(),
-		.isStatic = false,
-	};
-
-	Particle* particle2 = ParticleCreate(allParticlesArray);
-	*particle2 = (Particle) {
-		.x = (Vector2) { 40.0f, 120.0f },
-		.v = Vector2Zero(),
-		.a = Vector2Zero(),
-		.aApplied = Vector2Zero(),
-		.aConstraint = Vector2Zero(),
-		.isStatic = false,
-	};
-
-	//const Vector2 center1 = (Vector2) { .x = 200.0f, .y = 200.0f };
-	//const Vector2 radius1 = (Vector2) { .x = 50.0f, .y = 50.0f };
-	//CircleConstraintCreate(allConstraintsArray, symbolMatrixArray, ParticleArrayOf(1, particle1), center1, radius1);
-
-	//const Vector2 center2 = (Vector2) { .x = 250.0f, .y = 200.0f };
-	//const Vector2 radius2 = (Vector2) { .x = 50.0f, .y = 50.0f };
-	//CircleConstraintCreate(allConstraintsArray, symbolMatrixArray, ParticleArrayOf(1, particle1), center2, radius2);
-
-	const float distance = 10.0f;
-	DistanceConstraintCreate(allConstraintsArray, symbolMatrixArray, ParticleArrayOf(2, particle1, particle2), distance);
-
-	Simulator simulator = SimulatorCreate(allParticlesArray, allConstraintsArray, true);
+	Simulator simulator = case1(symbolMatrixArray, allParticlesArray, allConstraintsArray);
 
 	const int FONT_SIZE = 11;
 
@@ -86,7 +55,7 @@ int main(void) {
 
 		//DrawEllipseLines(iroundf(center1.x), iroundf(center1.y), radius1.x, radius1.y, LIGHTGRAY);
 		//DrawEllipseLines(iroundf(center2.x), iroundf(center2.y), radius2.x, radius2.y, LIGHTGRAY);
-		DrawLine(iroundf(particle1->x.x), iroundf(particle1->x.y), iroundf(particle2->x.x), iroundf(particle2->x.y), LIGHTGRAY);
+		//DrawLine(iroundf(particle1->x.x), iroundf(particle1->x.y), iroundf(particle2->x.x), iroundf(particle2->x.y), LIGHTGRAY);
 
 		for(unsigned int i = 0; i < allParticlesArray->size; i++) {
 			Particle *particle = allParticlesArray->start[i];
@@ -112,7 +81,6 @@ int main(void) {
 	// De-Initialization
 	//--------------------------------------------------------------------------------------
 	SymbolMatrixArrayFree(symbolMatrixArray);
-	MatrixNArrayFree(matrixNArray);
 	ParticleArrayFree(allParticlesArray);
 	ConstraintArrayFree(allConstraintsArray);
 
