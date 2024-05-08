@@ -12,4 +12,7 @@ Simulator case2(SymbolMatrixArray* symbolMatrixArray, ParticleArray* allParticle
 Simulator case3(SymbolMatrixArray* symbolMatrixArray, ParticleArray* allParticlesArray,
 				ConstraintArray* allConstraintsArray);
 
+Simulator case4(SymbolMatrixArray* symbolMatrixArray, ParticleArray* allParticlesArray,
+                ConstraintArray* allConstraintsArray);
+
 #endif //SIMULATOR_CASES_H

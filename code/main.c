@@ -35,7 +35,7 @@ int main(void) {
 
 		const double updateTimeStartMs = GetTime() * 1000;
 
-		SimulatorUpdate(&simulator, 0.000001f);
+		SimulatorUpdate(&simulator, 0.0001f);
 
 		const double updateTimeEndMs = GetTime() * 1000;
 
