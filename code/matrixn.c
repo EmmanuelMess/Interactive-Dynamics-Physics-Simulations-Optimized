@@ -190,10 +190,10 @@ MatrixN* MatrixNInverse (MatrixNArray* array, MatrixN * matrix) {
 		}
 	}
 	for (unsigned int k = 0; k < n; ++k) {  /* Main loop */
-		f = fabs(matrix->values[k+k*n]);  /* Find pivot. */
+		f = fabsf(matrix->values[k+k*n]);  /* Find pivot. */
 		unsigned int p = k;
 		for (unsigned int i = k+1; i < n; ++i) {
-			g = fabs(matrix->values[k+i*n]);
+			g = fabsf(matrix->values[k+i*n]);
 			if (g > f) {
 				f = g;
 				p = i;

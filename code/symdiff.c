@@ -84,6 +84,14 @@ SymbolNode* SymbolNodeDifferentiate(SymbolNode* expression, SymbolNodeArray* arr
 				SymbolNodeDifferentiate(expression->data.children.right, array, variable)
 			);
 		}
+		case SUSTRACT: {
+			return SymbolNodeBinary(
+				array,
+				SUSTRACT,
+				SymbolNodeDifferentiate(expression->data.children.left, array, variable),
+				SymbolNodeDifferentiate(expression->data.children.right, array, variable)
+			);
+		}
 		case MULTIPLY: {
 			return SymbolNodeBinary(
 				array,
@@ -116,6 +124,7 @@ SymbolNode* SymbolNodeEvaluate(SymbolNode* expression, SymbolNodeArray* array, S
 				return expression;
 			}
 		case ADD:
+		case SUSTRACT:
 		case MULTIPLY: {
 			SymbolNode *left = SymbolNodeEvaluate(expression->data.children.left, array, variable, value);
 			SymbolNode *right = SymbolNodeEvaluate(expression->data.children.right, array, variable, value);
@@ -123,6 +132,8 @@ SymbolNode* SymbolNodeEvaluate(SymbolNode* expression, SymbolNodeArray* array, S
 				switch(expression->operation) {
 					case ADD:
 						return SymbolNodeConstant(array, left->data.value + right->data.value);
+					case SUSTRACT:
+						return SymbolNodeConstant(array, left->data.value - right->data.value);
 					case MULTIPLY:
 						return SymbolNodeConstant(array, left->data.value * right->data.value);
 					default:
@@ -147,15 +158,25 @@ void SymbolNodePrintInternal(SymbolNode* expression) {
 			printf("x_%u", expression->data.variableId);
 			break;
 		case ADD:
+		case SUSTRACT:
+		case MULTIPLY: {
 			SymbolNodePrintInternal(expression->data.children.left);
-			printf("+");
+			switch (expression->operation) {
+				case ADD:
+					printf("+");
+					break;
+				case SUSTRACT:
+					printf("-");
+					break;
+				case MULTIPLY:
+					printf("*");
+					break;
+				default:
+					__builtin_unreachable(); // This should be impossible
+			}
 			SymbolNodePrintInternal(expression->data.children.right);
 			break;
-		case MULTIPLY:
-			SymbolNodePrintInternal(expression->data.children.left);
-			printf("*");
-			SymbolNodePrintInternal(expression->data.children.right);
-			break;
+		}
 		default:
 			assert(false, "Unhandled operation!");
 	}
@@ -236,18 +257,6 @@ SymbolNode *SymbolMatrixGet(SymbolMatrix *matrix, unsigned int row, unsigned int
 	return matrix->values[row + matrix->rows * col];
 }
 
-SymbolMatrix* SymbolMatrixTranspose(SymbolMatrix* matrix) {
-	for (unsigned int i = 0; i < matrix->rows / 2; ++i) {
-		for (unsigned int j = 0; j < matrix->cols / 2; ++j) {
-			SymbolNode* t = SymbolMatrixGet(matrix, i, j);
-			SymbolMatrixSet(matrix, i, j, SymbolMatrixGet(matrix, j, i));
-			SymbolMatrixSet(matrix, j, i, t);
-		}
-	}
-
-	return matrix;
-}
-
 SymbolMatrix* SymbolMatrixAdd(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right) {
 	assert(left->rows == right->rows && left->cols == right->cols, "Matrix dimensions don't match!");
 
@@ -266,9 +275,7 @@ SymbolMatrix* SymbolMatrixSubtract(SymbolMatrixArray* array, SymbolMatrix* left,
 	SymbolMatrix* matrix = SymbolMatrixCreate(array, left->rows, left->cols);
 
 	for (unsigned int i = 0; i < left->rows * left->cols; ++i) {
-		// TODO define an operation SymbolNodeBinary SUBTRACT
-		SymbolNode* t = SymbolNodeBinary(array->nodeArray, MULTIPLY, SymbolNodeConstant(array->nodeArray, -1), right->values[i]);
-		matrix->values[i] = SymbolNodeBinary(array->nodeArray, ADD, left->values[i], t);
+		matrix->values[i] = SymbolNodeBinary(array->nodeArray, SUSTRACT, left->values[i], right->values[i]);
 	}
 
 	return matrix;
@@ -295,29 +302,6 @@ SymbolMatrix* SymbolMatrixMultiplyElementWise(SymbolMatrixArray* array, SymbolMa
 	}
 
 	return matrix;
-}
-
-SymbolMatrix* SymbolMatrixMultiply(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right) {
-	assert(left->cols == right->rows, "Matrix dimensions don't match!");
-
-	SymbolMatrix* sumMatrix = SymbolMatrixCreate(array, left->rows, right->cols);
-
-	for (unsigned int i = 0; i < sumMatrix->rows; ++i) {
-		for (unsigned int j = 0; i < sumMatrix->cols; ++j) {
-			SymbolNode *r = SymbolNodeConstant(array->nodeArray, 0);
-
-			for (unsigned int k = 0; i < left->cols; ++k) {
-				SymbolNode* lNode = SymbolMatrixGet(left, i, k);
-				SymbolNode* rNode = SymbolMatrixGet(right, k, j);
-				SymbolNode* sum = SymbolNodeBinary(array->nodeArray, ADD, lNode, rNode);
-				r = SymbolNodeBinary(array->nodeArray, ADD, r, sum);
-			}
-
-			SymbolMatrixSet(sumMatrix, i, j, r);
-		}
-	}
-
-	return sumMatrix;
 }
 
 SymbolMatrix* SymbolNodeDifferentiateSymbolMatrix(SymbolNode* expression, SymbolMatrixArray* array, SymbolMatrix* variableMatrix) {

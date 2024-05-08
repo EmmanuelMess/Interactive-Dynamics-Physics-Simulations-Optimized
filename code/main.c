@@ -22,7 +22,7 @@ int main(void) {
 	ParticleArray* allParticlesArray = ParticleArrayCreate();
 	ConstraintArray* allConstraintsArray = ConstraintArrayCreate();
 
-	Simulator simulator = case1(symbolMatrixArray, allParticlesArray, allConstraintsArray);
+	Simulator simulator = case3(symbolMatrixArray, allParticlesArray, allConstraintsArray);
 
 	const int FONT_SIZE = 11;
 

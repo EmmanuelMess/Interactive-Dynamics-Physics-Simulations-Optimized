@@ -11,6 +11,7 @@ typedef enum Operation {
 	CONSTANT = 0,
 	VARIABLE,
 	ADD,
+	SUSTRACT,
 	MULTIPLY,
 } Operation;
 
@@ -86,8 +87,6 @@ void SymbolMatrixSet(SymbolMatrix *matrix, unsigned int row, unsigned int col, S
 
 SymbolNode *SymbolMatrixGet(SymbolMatrix *matrix, unsigned int row, unsigned int col);
 
-SymbolMatrix* SymbolMatrixTranspose(SymbolMatrix* matrix);
-
 SymbolMatrix* SymbolMatrixAdd(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right);
 
 SymbolMatrix* SymbolMatrixSubtract(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right);
@@ -95,8 +94,6 @@ SymbolMatrix* SymbolMatrixSubtract(SymbolMatrixArray* array, SymbolMatrix* left,
 SymbolMatrix* SymbolMatrixMultiplyValue(SymbolMatrixArray* array, SymbolMatrix* left, SymbolNode* right);
 
 SymbolMatrix* SymbolMatrixMultiplyElementWise(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right);
-
-SymbolMatrix* SymbolMatrixMultiply(SymbolMatrixArray* array, SymbolMatrix* left, SymbolMatrix* right);
 
 SymbolMatrix* SymbolNodeDifferentiateSymbolMatrix(SymbolNode* expression, SymbolMatrixArray* array, SymbolMatrix* variableMatrix);
 
