@@ -45,8 +45,6 @@ SymbolNode* SymbolNodeConstant(SymbolNodeArray* array, float value);
 
 SymbolNode *SymbolNodeVariable(SymbolNodeArray *array);
 
-SymbolNode *SymbolNodeVariable(SymbolNodeArray *array);
-
 SymbolNode* SymbolNodeBinary(SymbolNodeArray* array, Operation operation, SymbolNode* left, SymbolNode* right);
 
 SymbolNode* SymbolNodeDifferentiate(SymbolNode* expression, SymbolNodeArray* array, SymbolNode* variable);
