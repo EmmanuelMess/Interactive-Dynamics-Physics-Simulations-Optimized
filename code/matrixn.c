@@ -113,7 +113,7 @@ MatrixN* MatrixNNegate(MatrixNArray* array, MatrixN * matrix) {
 
 	for (unsigned int i = 0; i < matrix->rows; ++i) {
 		for (unsigned int j = 0; j < matrix->cols; ++j) {
-			*MatrixNGet(result, i, j) *= -1;
+			*MatrixNGet(result, i, j) = *MatrixNGet(matrix, i, j) * -1;
 		}
 	}
 
@@ -168,17 +168,20 @@ MatrixN* MatrixNMultiplyValue(MatrixNArray* array, MatrixN * matrix, float value
 MatrixN* MatrixNInverse (MatrixNArray* array, MatrixN * matrix) {
 	assert(matrix->rows == matrix->cols, "Matrix is not square!");
 
+	MatrixN * temporal = MatrixNCreate(array, matrix->rows, matrix->cols);
 	MatrixN * result = MatrixNCreate(array, matrix->rows, matrix->cols);
 
+	for(unsigned int i = 0; i < matrix->rows*matrix->cols; i++) {
+		temporal->values[i] = matrix->values[i];
+	}
 
 	// Algorithm from https://rosettacode.org/wiki/Gauss-Jordan_matrix_inversion#C
-	const unsigned int n = matrix->rows;
-	assert(n >= 1, "Matrix is not invertible!");
+	const unsigned int n = temporal->rows;
 	float g;
 	float f = 0.0f;  /* Frobenius norm of a */
 	for (unsigned int i = 0; i < n; ++i) {
 		for (unsigned int j = 0; j < n; ++j) {
-			g = matrix->values[j+i*n];
+			g = temporal->values[j+i*n];
 			f += g * g;
 		}
 	}
@@ -186,14 +189,18 @@ MatrixN* MatrixNInverse (MatrixNArray* array, MatrixN * matrix) {
 	double tol = f * 2.2204460492503131e-016;
 	for (unsigned int i = 0; i < n; ++i) {  /* Set b to identity matrix. */
 		for (unsigned int j = 0; j < n; ++j) {
-			result->values[j+i*n] = (i == j) ? 1.0f : 0.0f;
+			if (i == j) {
+				result->values[j + i * n] = 1.0f;
+			} else {
+				result->values[j + i * n] = 0.0f;
+			}
 		}
 	}
 	for (unsigned int k = 0; k < n; ++k) {  /* Main loop */
-		f = fabsf(matrix->values[k+k*n]);  /* Find pivot. */
+		f = fabsf(temporal->values[k+k*n]);  /* Find pivot. */
 		unsigned int p = k;
 		for (unsigned int i = k+1; i < n; ++i) {
-			g = fabsf(matrix->values[k+i*n]);
+			g = fabsf(temporal->values[k+i*n]);
 			if (g > f) {
 				f = g;
 				p = i;
@@ -202,9 +209,9 @@ MatrixN* MatrixNInverse (MatrixNArray* array, MatrixN * matrix) {
 		assert(f >= tol, "Matrix is singular!");
 		if (p != k) {  /* Swap rows. */
 			for (unsigned int j = k; j < n; ++j) {
-				f = matrix->values[j+k*n];
-				matrix->values[j+k*n] = matrix->values[j+p*n];
-				matrix->values[j+p*n] = f;
+				f = temporal->values[j+k*n];
+				temporal->values[j+k*n] = temporal->values[j+p*n];
+				temporal->values[j+p*n] = f;
 			}
 			for (unsigned int j = 0; j < n; ++j) {
 				f = result->values[j+k*n];
@@ -212,13 +219,13 @@ MatrixN* MatrixNInverse (MatrixNArray* array, MatrixN * matrix) {
 				result->values[j+p*n] = f;
 			}
 		}
-		f = 1.0f / matrix->values[k+k*n];  /* Scale row so pivot is 1. */
-		for (unsigned int j = k; j < n; ++j) matrix->values[j+k*n] *= f;
+		f = 1.0f / temporal->values[k+k*n];  /* Scale row so pivot is 1. */
+		for (unsigned int j = k; j < n; ++j) temporal->values[j+k*n] *= f;
 		for (unsigned int j = 0; j < n; ++j) result->values[j+k*n] *= f;
 		for (unsigned int i = 0; i < n; ++i) {  /* Subtract to get zeros. */
 			if (i == k) continue;
-			f = matrix->values[k+i*n];
-			for (unsigned int j = k; j < n; ++j) matrix->values[j+i*n] -= matrix->values[j+k*n] * f;
+			f = temporal->values[k+i*n];
+			for (unsigned int j = k; j < n; ++j) temporal->values[j+i*n] -= temporal->values[j+k*n] * f;
 			for (unsigned int j = 0; j < n; ++j) result->values[j+i*n] -= result->values[j+k*n] * f;
 		}
 	}

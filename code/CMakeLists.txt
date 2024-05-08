@@ -24,13 +24,15 @@ target_compile_options(simulator PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
 target_link_libraries(simulator raylib)
 
-add_executable(test test_symdiff_node.c
+add_executable(test
     simulator.c
     symdiff.c
     matrixn.c
     math.c
     constraint_type.c
-    test_symdiff_matrix.c)
+    test_symdiff_node.c
+    test_symdiff_matrix.c
+    test_matrixn.c)
 
 target_compile_options(test PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
