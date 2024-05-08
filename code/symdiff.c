@@ -54,8 +54,8 @@ SymbolNode *SymbolNodeVariable(SymbolNodeArray *array) {
 }
 
 SymbolNode* SymbolNodeBinary(SymbolNodeArray* array, Operation operation, SymbolNode* left, SymbolNode* right) {
-	assert(left != NULL, "Tried to operate on null!");
-	assert(right != NULL, "Tried to operate on null!");
+	assert(left != NULL, "Operand is NULL!");
+	assert(right != NULL, "Operand is NULL!");
 
 	SymbolNode* node = NodeArrayAdd(array);
 	*node = (SymbolNode)  { .operation = operation, .data.children.left = left, .data.children.right = right };
@@ -285,7 +285,7 @@ SymbolMatrix* SymbolMatrixMultiplyValue(SymbolMatrixArray* array, SymbolMatrix* 
 	SymbolMatrix* matrix = SymbolMatrixCreate(array, left->rows, left->cols);
 
 	for (unsigned int i = 0; i < left->rows * left->cols; ++i) {
-		matrix->values[i] = SymbolNodeBinary(array->nodeArray, ADD, left->values[i], right);
+		matrix->values[i] = SymbolNodeBinary(array->nodeArray, MULTIPLY, left->values[i], right);
 	}
 
 	return matrix;

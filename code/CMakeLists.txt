@@ -10,6 +10,8 @@ ConstraintBasedSimulator_setup_dependencies()
 
 project(simulator C)
 
+# TODO make lib with source files
+
 add_executable(simulator main.c
     simulator.c
     symdiff.c
@@ -32,3 +34,4 @@ add_executable(test test.c
 target_compile_options(test PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
 target_link_libraries(test raylib)
+target_link_libraries(test criterion)

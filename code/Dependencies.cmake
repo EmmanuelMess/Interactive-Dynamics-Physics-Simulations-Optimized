@@ -11,4 +11,6 @@ function(ConstraintBasedSimulator_setup_dependencies)
     cpmaddpackage("gh:raysan5/raylib#5.0")
   endif()
 
+  # TODO add criterion
+
 endfunction()
