@@ -42,11 +42,11 @@ SymbolNode* CircleConstraintFunction(SymbolMatrixArray* array, SymbolNode* t, Sy
 	SymbolMatrix* t2 = SymbolMatrixAdd(array, positionParticle1, t1);                                                   // x(t) - center
 	SymbolMatrix* t3 = SymbolMatrixMultiplyElementWise(array, t2, t2);                                                  // (x(t) - center) ** 2
 	SymbolMatrix* t4 = SymbolMatrixMultiplyValue(array, t3, SymbolNodeConstant(array->nodeArray, 0.5f));                // (x(t) - center) ** 2 / 2
-	SymbolMatrix* t5 = SymbolMatrixCreate(array, 1, 2);                                                                 // -1 * (radius ** 2) / 2)
-	SymbolMatrixSet(t5, 0, 0, SymbolNodeConstant(array->nodeArray, -(radius.x * radius.x) / 2.0f));
-	SymbolMatrixSet(t5, 0, 1, SymbolNodeConstant(array->nodeArray, -(radius.y * radius.y) / 2.0f));
-	SymbolMatrix* t6 = SymbolMatrixAdd(array, t4, t5);                                                                  // (x(t) - center) ** 2 / 2 + (-1 * (radius ** 2) / 2)
-	SymbolNode* t7 = SymbolNodeBinary(array->nodeArray, ADD, SymbolMatrixGet(t6, 0, 0), SymbolMatrixGet(t6, 0, 1));     // sum((x(t) - center) ** 2 / 2 + (-1 * (radius ** 2) / 2))
+	SymbolMatrix* t5 = SymbolMatrixCreate(array, 1, 2);                                                                 // (radius ** 2) / 2)
+	SymbolMatrixSet(t5, 0, 0, SymbolNodeConstant(array->nodeArray, (radius.x * radius.x) / 2.0f));
+	SymbolMatrixSet(t5, 0, 1, SymbolNodeConstant(array->nodeArray, (radius.y * radius.y) / 2.0f));
+	SymbolMatrix* t6 = SymbolMatrixSubtract(array, t4, t5);                                                             // (x(t) - center) ** 2 / 2 - (radius ** 2) / 2
+	SymbolNode* t7 = SymbolNodeBinary(array->nodeArray, ADD, SymbolMatrixGet(t6, 0, 0), SymbolMatrixGet(t6, 0, 1));     // sum((x(t) - center) ** 2 / 2 - (radius ** 2) / 2)
 
 	return t7;
 }
@@ -104,11 +104,11 @@ SymbolNode* DistanceConstraintFunction(SymbolMatrixArray* array, SymbolNode* t, 
 	SymbolMatrix* t3 = SymbolMatrixSubtract(array, t1, t2);                                                             // x_1(t) - x_2(t)
 	SymbolMatrix* t4 = SymbolMatrixMultiplyElementWise(array, t3, t3);                                                  // (x_1(t) - x_2(t)) ** 2
 	SymbolMatrix* t5 = SymbolMatrixMultiplyValue(array, t4, SymbolNodeConstant(array->nodeArray, 0.5f));                // (x_1(t) - x_2(t)) ** 2 / 2
-	SymbolMatrix* t6 = SymbolMatrixCreate(array, 1, 2);                                                                 // -1 * (distance ** 2) / 2)
-	SymbolMatrixSet(t6, 0, 0, SymbolNodeConstant(array->nodeArray, -(distance * distance) / 2.0f));
-	SymbolMatrixSet(t6, 0, 1, SymbolNodeConstant(array->nodeArray, -(distance * distance) / 2.0f));
-	SymbolMatrix* t7 = SymbolMatrixAdd(array, t5, t6);                                                                  // (x_1(t) - x_2(t)) ** 2 / 2 + (-1 * (distance ** 2) / 2))
-	SymbolNode* t8 = SymbolNodeBinary(array->nodeArray, ADD, SymbolMatrixGet(t7, 0, 0), SymbolMatrixGet(t7, 0, 1));     // sum((x_1(t) - x_2(t)) ** 2 / 2 + (-1 * (distance ** 2) / 2)))
+	SymbolMatrix* t6 = SymbolMatrixCreate(array, 1, 2);                                                                 // (distance ** 2) / 2)
+	SymbolMatrixSet(t6, 0, 0, SymbolNodeConstant(array->nodeArray, (distance * distance) / 2.0f));
+	SymbolMatrixSet(t6, 0, 1, SymbolNodeConstant(array->nodeArray, (distance * distance) / 2.0f));
+	SymbolMatrix* t7 = SymbolMatrixSubtract(array, t5, t6);                                                             // (x_1(t) - x_2(t)) ** 2 / 2 - (distance ** 2) / 2)
+	SymbolNode* t8 = SymbolNodeBinary(array->nodeArray, ADD, SymbolMatrixGet(t7, 0, 0), SymbolMatrixGet(t7, 0, 1));     // sum((x_1(t) - x_2(t)) ** 2 / 2 - (distance ** 2) / 2))
 
 	return t8;
 }

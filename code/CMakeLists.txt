@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.27)
 
 set(CMAKE_C_STANDARD 23)
-SET(CMAKE_CXX_FLAGS "-Wall")
+SET(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Werror")
 SET(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
@@ -9,8 +9,6 @@ include(Dependencies.cmake)
 ConstraintBasedSimulator_setup_dependencies()
 
 project(simulator C)
-
-SET(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Werror")
 
 add_library(simulator_lib
     simulator.c
