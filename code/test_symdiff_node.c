@@ -1,4 +1,6 @@
 #include <criterion/criterion.h>
+#include <criterion/new/assert.h>
+
 #include "symdiff.h"
 
 static SymbolNodeArray* symbolNodeArray;
@@ -17,15 +19,15 @@ Test(symdiff_node, constant, .init = setup, .fini = teardown) {
 	SymbolNode* expression = SymbolNodeBinary(symbolNodeArray, ADD, variable, t1); // v + 10
 
 	const float value = SymbolNodeEvaluate(expression, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(110, value, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 110, value, 4));
 
 	SymbolNode* derivate = SymbolNodeDifferentiate(expression, symbolNodeArray, variable);
 	const float valueD = SymbolNodeEvaluate(derivate, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(1, valueD, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 1, valueD, 4));
 
 	SymbolNode* derivate2 = SymbolNodeDifferentiate(derivate, symbolNodeArray, variable);
 	const float valueD2 = SymbolNodeEvaluate(derivate2, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(0, valueD2, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 0, valueD2, 4));
 }
 
 Test(symdiff_node, variable, .init = setup, .fini = teardown) {
@@ -33,15 +35,15 @@ Test(symdiff_node, variable, .init = setup, .fini = teardown) {
 	SymbolNode* expression = SymbolNodeBinary(symbolNodeArray, ADD, variable, variable); // v + v
 
 	const float value = SymbolNodeEvaluate(expression, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(200, value, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 200, value, 4));
 
 	SymbolNode* derivate = SymbolNodeDifferentiate(expression, symbolNodeArray, variable);
 	const float valueD = SymbolNodeEvaluate(derivate, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(2, valueD, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 2, valueD, 4));
 
 	SymbolNode* derivate2 = SymbolNodeDifferentiate(derivate, symbolNodeArray, variable);
 	const float valueD2 = SymbolNodeEvaluate(derivate2, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(0, valueD2, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 0, valueD2, 4));
 }
 
 Test(symdiff_node, add, .init = setup, .fini = teardown) {
@@ -53,15 +55,15 @@ Test(symdiff_node, add, .init = setup, .fini = teardown) {
 	SymbolNode* expression = SymbolNodeBinary(symbolNodeArray, ADD, t1, t4); // v + v + 10 + 20
 
 	const float value = SymbolNodeEvaluate(expression, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(230, value, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 230, value, 4));
 
 	SymbolNode* derivate = SymbolNodeDifferentiate(expression, symbolNodeArray, variable);
 	const float valueD = SymbolNodeEvaluate(derivate, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(2, valueD, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 2, valueD, 4));
 
 	SymbolNode* derivate2 = SymbolNodeDifferentiate(derivate, symbolNodeArray, variable);
 	const float valueD2 = SymbolNodeEvaluate(derivate2, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(0, valueD2, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 0, valueD2, 4));
 }
 
 Test(symdiff_node, sustract, .init = setup, .fini = teardown) {
@@ -73,15 +75,15 @@ Test(symdiff_node, sustract, .init = setup, .fini = teardown) {
 	SymbolNode* expression = SymbolNodeBinary(symbolNodeArray, ADD, t1, t4); // v - v + 10 - 20
 
 	const float value = SymbolNodeEvaluate(expression, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(-10, value, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, -10, value, 4));
 
 	SymbolNode* derivate = SymbolNodeDifferentiate(expression, symbolNodeArray, variable);
 	const float valueD = SymbolNodeEvaluate(derivate, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(0, valueD, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 0, valueD, 4));
 
 	SymbolNode* derivate2 = SymbolNodeDifferentiate(derivate, symbolNodeArray, variable);
 	const float valueD2 = SymbolNodeEvaluate(derivate2, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(0, valueD2, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 0, valueD2, 4));
 }
 
 Test(symdiff_node, multiply, .init = setup, .fini = teardown) {
@@ -93,19 +95,19 @@ Test(symdiff_node, multiply, .init = setup, .fini = teardown) {
 	SymbolNode* expression = SymbolNodeBinary(symbolNodeArray, ADD, t1, t4); // v * v + 10 * 20
 
 	const float value = SymbolNodeEvaluate(expression, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(10200, value, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 10200, value, 4));
 
 	SymbolNode* derivate = SymbolNodeDifferentiate(expression, symbolNodeArray, variable);
 	const float valueD = SymbolNodeEvaluate(derivate, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(200, valueD, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 200, valueD, 4));
 
 	SymbolNode* derivate2 = SymbolNodeDifferentiate(derivate, symbolNodeArray, variable);
 	const float valueD2 = SymbolNodeEvaluate(derivate2, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(2, valueD2, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 2, valueD2, 4));
 
 	SymbolNode* derivate3 = SymbolNodeDifferentiate(derivate2, symbolNodeArray, variable);
 	const float valueD3 = SymbolNodeEvaluate(derivate3, symbolNodeArray, variable, 100)->data.value;
-	cr_assert_float_eq(0, valueD3, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 0, valueD3, 4));
 }
 
 Test(symdiff_node, general, .init = setup, .fini = teardown) {
@@ -125,13 +127,13 @@ Test(symdiff_node, general, .init = setup, .fini = teardown) {
 	SymbolNode* expression = SymbolNodeBinary(symbolNodeArray, ADD, t9, t7); // v**3 + 2 * v**2 - 4 * v + 3
 
 	const float value = SymbolNodeEvaluate(expression, symbolNodeArray, variable, 100)->data.value; // 100**3 + 2 * 100**2 - 4 * 100 + 3
-	cr_assert_float_eq(1019603, value, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 1019603, value, 4));
 
 	SymbolNode* derivate = SymbolNodeDifferentiate(expression, symbolNodeArray, variable); // 3 * v**2 + 4 * v - 4
 	const float valueD = SymbolNodeEvaluate(derivate, symbolNodeArray, variable, 100)->data.value; // 3 * 100**2 + 4 * 100 - 4
-	cr_assert_float_eq(30396, valueD, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 30396, valueD, 4));
 
 	SymbolNode* derivate2 = SymbolNodeDifferentiate(derivate, symbolNodeArray, variable); // 6 * v + 4
 	const float valueD2 = SymbolNodeEvaluate(derivate2, symbolNodeArray, variable, 100)->data.value; // 6 * 100 + 4
-	cr_assert_float_eq(604, valueD2, 0.0001);
+	cr_assert(ieee_ulp_eq(flt, 604, valueD2, 4));
 }

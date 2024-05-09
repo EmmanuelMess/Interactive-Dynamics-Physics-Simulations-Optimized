@@ -1,4 +1,5 @@
 #include <criterion/criterion.h>
+#include <criterion/new/assert.h>
 
 #include "symdiff.h"
 
@@ -29,17 +30,17 @@ Test(symdiff_matrix, general, .init = setup, .fini = teardown) {
 	for(unsigned int i = 0; i < d->rows * d->cols; i++) {
 		const float value = SymbolNodeEvaluate(d->values[i], arraySymbolMatrix->nodeArray, a->values[i],
 		                                       100)->data.value;
-		cr_assert_float_eq(10010, value, 0.0001);
+		cr_assert(ieee_ulp_eq(flt, 10010, value, 4));
 
 
 		SymbolMatrix *derivate = SymbolMatrixDifferentiateSymbolNode(d, arraySymbolMatrix, a->values[i]);
 		const float valueD = SymbolNodeEvaluate(derivate->values[i], arraySymbolMatrix->nodeArray, a->values[i],
 		                                        100)->data.value;
-		cr_assert_float_eq(200, valueD, 0.0001);
+		cr_assert(ieee_ulp_eq(flt, 200, valueD, 4));
 
 		SymbolMatrix *derivate2 = SymbolMatrixDifferentiateSymbolNode(derivate, arraySymbolMatrix, a->values[i]);
 		const float valueD2 = SymbolNodeEvaluate(derivate2->values[i], arraySymbolMatrix->nodeArray, a->values[i],
 		                                         100)->data.value;
-		cr_assert_float_eq(2, valueD2, 0.0001);
+		cr_assert(ieee_ulp_eq(flt, 2, valueD2, 4));
 	}
 }
