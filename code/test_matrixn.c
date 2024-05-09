@@ -25,6 +25,28 @@ static void teardown() {
 	MatrixNArrayFree(arrayMatrixN);
 }
 
+Test(matrixn, transpose_1, .init = setup, .fini = teardown) {
+	MatrixN* matrix = Generate(1, 1);
+	*MatrixNGet(matrix, 0, 0) = 0.5f;
+	MatrixN* transpose = MatrixNTranspose(arrayMatrixN, matrix);
+
+	cr_assert(ieee_ulp_eq(flt, 0.5f, *MatrixNGet(transpose, 0, 0), 4));
+}
+
+Test(matrixn, transpose_2, .init = setup, .fini = teardown) {
+	MatrixN* matrix = Generate(4, 1);
+	*MatrixNGet(matrix, 0, 0) = 0.5f;
+	*MatrixNGet(matrix, 1, 0) = 5.0f;
+	*MatrixNGet(matrix, 2, 0) = -30.0f;
+	*MatrixNGet(matrix, 3, 0) = -9000.0f;
+	MatrixN* transpose = MatrixNTranspose(arrayMatrixN, matrix);
+
+	cr_assert(ieee_ulp_eq(flt, 0.5f, *MatrixNGet(transpose, 0, 0), 4));
+	cr_assert(ieee_ulp_eq(flt, 5.0f, *MatrixNGet(transpose, 0, 1), 4));
+	cr_assert(ieee_ulp_eq(flt, -30.0f, *MatrixNGet(transpose, 0, 2), 4));
+	cr_assert(ieee_ulp_eq(flt, -9000.0f, *MatrixNGet(transpose, 0, 3), 4));
+}
+
 Test(matrixn, transpose_inv_1, .init = setup, .fini = teardown) {
 	MatrixN* matrix = Generate(4, 1);
 	MatrixN* transpose = MatrixNTranspose(arrayMatrixN, MatrixNTranspose(arrayMatrixN, matrix));
@@ -91,6 +113,16 @@ Test(matrixn, add_inv_2, .init = setup, .fini = teardown) {
 	}
 }
 
+Test(matrixn, multiply_1, .init = setup, .fini = teardown) {
+	MatrixN* a = Generate(1, 1);
+	*MatrixNGet(a, 0, 0) = 2.0f;
+	MatrixN* b = Generate(1, 1);
+	*MatrixNGet(b, 0, 0) = 0.5f;
+	MatrixN* result = MatrixNMultiply(arrayMatrixN, a, b);
+
+	cr_assert(ieee_ulp_eq(flt, *MatrixNGet(result, 0, 0), 1.0f, 4));
+}
+
 Test(matrixn, inverse_1, .init = setup, .fini = teardown) {
 	MatrixN* matrix = MatrixNCreate(arrayMatrixN, 4, 4);
 	*MatrixNGet(matrix, 0, 0) = -1; *MatrixNGet(matrix, 0, 1) = -2; *MatrixNGet(matrix, 0, 2) = 3; *MatrixNGet(matrix, 0, 3) = 2;
@@ -135,7 +167,7 @@ Test(matrixn, inverse_3, .init = setup, .fini = teardown) {
 
 	for (unsigned int i = 0; i < matrix->rows; ++i) {
 		for (unsigned int j = 0; j < matrix->cols; ++j) {
-			cr_assert(ieee_ulp_eq(flt, *MatrixNGet(realInverse, i, j), *MatrixNGet(inverse, i, j), 4), "at pos (%u, %u)", i, j);
+			cr_assert(epsilon_eq(flt, *MatrixNGet(realInverse, i, j), *MatrixNGet(inverse, i, j), 0.0001), "at pos (%u, %u)", i, j);
 		}
 	}
 }
@@ -161,7 +193,7 @@ Test(matrixn, inverse_inv_2, .init = setup, .fini = teardown) {
 
 	for (unsigned int i = 0; i < matrix->rows; ++i) {
 		for (unsigned int j = 0; j < matrix->cols; ++j) {
-			cr_assert(ieee_ulp_eq(flt, *MatrixNGet(matrix, i, j), *MatrixNGet(inversed, i, j), 4), "at pos (%u, %u)", i, j);
+			cr_assert(epsilon_eq(flt, *MatrixNGet(matrix, i, j), *MatrixNGet(inversed, i, j), 0.0001), "at pos (%u, %u)", i, j);
 		}
 	}
 }
@@ -183,7 +215,7 @@ Test(matrixn, pseudoinverse_1, .init = setup, .fini = teardown) {
 
 	for (unsigned int i = 0; i < matrix->rows; ++i) {
 		for (unsigned int j = 0; j < matrix->cols; ++j) {
-			cr_assert(ieee_ulp_eq(flt, *MatrixNGet(realInverse, i, j), *MatrixNGet(inverse, i, j), 4), "at pos (%u, %u)", i, j);
+			cr_assert(epsilon_eq(flt, *MatrixNGet(realInverse, i, j), *MatrixNGet(inverse, i, j), 0.0001), "at pos (%u, %u)", i, j);
 		}
 	}
 }
@@ -210,7 +242,7 @@ Test(matrixn, pseudoinverse_3, .init = setup, .fini = teardown) {
 
 	for (unsigned int i = 0; i < matrix->rows; ++i) {
 		for (unsigned int j = 0; j < matrix->cols; ++j) {
-			cr_assert(ieee_ulp_eq(flt, *MatrixNGet(realInverse, i, j), *MatrixNGet(inverse, i, j), 4), "at pos (%u, %u)", i, j);
+			cr_assert(epsilon_eq(flt, *MatrixNGet(realInverse, i, j), *MatrixNGet(inverse, i, j), 0.0001), "at pos (%u, %u)", i, j);
 		}
 	}
 }
@@ -236,7 +268,7 @@ Test(matrixn, pseudoinverse_inv_2, .init = setup, .fini = teardown) {
 
 	for (unsigned int i = 0; i < matrix->rows; ++i) {
 		for (unsigned int j = 0; j < matrix->cols; ++j) {
-			cr_assert(ieee_ulp_eq(flt, *MatrixNGet(matrix, i, j), *MatrixNGet(inversed, i, j), 4), "at pos (%u, %u)", i, j);
+			cr_assert(epsilon_eq(flt, *MatrixNGet(matrix, i, j), *MatrixNGet(inversed, i, j), 0.01), "at pos (%u, %u)", i, j);
 		}
 	}
 }

@@ -3,6 +3,8 @@
 #include <math.h>
 #include <raylib.h>
 #include <stdio.h>
+#include <config.h>
+#include <string.h>
 
 #include "custom_assert.h"
 
@@ -37,7 +39,7 @@ MatrixN* MatrixNArrayAdd(MatrixNArray* array) {
 
 void MatrixNArrayPrint(MatrixNArray* array) {
 	for (unsigned int i = 0; i < array->size; ++i) {
-		printf("%u:\n", i);
+		TraceLog(LOG_DEBUG, "%u:", i);
 		MatrixNPrint(array->start[i]);
 	}
 }
@@ -64,18 +66,24 @@ float* MatrixNGet(MatrixN * matrix, unsigned int row, unsigned int col) {
 }
 
 void MatrixNPrint(MatrixN* matrix) {
-	printf("[");
+	char buffer[MAX_TRACELOG_MSG_LENGTH] = { 0 };
+	char* end = buffer;
+
+	sprintf(end, "["); end += strlen(end);
 	for (unsigned int i = 0; i < matrix->rows; ++i) {
-		printf("[");
+		sprintf(end, "["); end += strlen(end);
 		for (unsigned int j = 0; j < matrix->cols; ++j) {
-			printf("%.6F ", *MatrixNGet(matrix, i, j));
+			sprintf(end, "%.6F ", *MatrixNGet(matrix, i, j)); end += strlen(end);
 		}
-		printf("]");
+		sprintf(end, "]"); end += strlen(end);
 		if(i != matrix->rows-1) {
-			printf("\n");
+			TraceLog(LOG_DEBUG, buffer);
+			end = buffer;
 		}
 	}
-	printf("]\n");
+	sprintf(end, "]"); end += strlen(end);
+
+	TraceLog(LOG_DEBUG, buffer);
 }
 
 void MatrixNReshape(MatrixN * matrix, unsigned int rows, unsigned int cols) {
@@ -144,7 +152,7 @@ MatrixN* MatrixNMultiply(MatrixNArray* array, MatrixN * a,  MatrixN * b) {
 			float r = 0;
 
 			for (unsigned int k = 0; k < a->cols; ++k) {
-				r = *MatrixNGet(a, i, k) + *MatrixNGet(b, k, j);
+				r += *MatrixNGet(a, i, k) * *MatrixNGet(b, k, j);
 			}
 
 			*MatrixNGet(result, i, j) = r;

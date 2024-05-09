@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 #include <raylib.h>
+#include <string.h>
+#include <config.h>
 #include "custom_assert.h"
 
 SymbolNodeArray* SymbolNodeArrayCreate() {
@@ -34,7 +36,7 @@ SymbolNode* NodeArrayAdd(SymbolNodeArray* array) {
 
 void SymbolNodeArrayPrint(SymbolNodeArray* array) {
 	for (unsigned int i = 0; i < array->size; ++i) {
-		printf("%u:\n", i);
+		TraceLog(LOG_DEBUG, "%u:", i);
 		SymbolNodePrint(array->start[i]);
 	}
 }
@@ -149,32 +151,32 @@ SymbolNode* SymbolNodeEvaluate(SymbolNode* expression, SymbolNodeArray* array, S
 	}
 }
 
-void SymbolNodePrintInternal(SymbolNode* expression) {
+static void SymbolNodePrintInternal(SymbolNode* expression, char **end) {
 	switch(expression->operation) {
 		case CONSTANT:
-			printf("%f", expression->data.value);
+			sprintf(*end, "%f", expression->data.value); *end += strlen(*end);
 			break;
 		case VARIABLE:
-			printf("x_%u", expression->data.variableId);
+			sprintf(*end, "x_%u", expression->data.variableId); *end += strlen(*end);
 			break;
 		case ADD:
 		case SUSTRACT:
 		case MULTIPLY: {
-			SymbolNodePrintInternal(expression->data.children.left);
+			SymbolNodePrintInternal(expression->data.children.left, end);
 			switch (expression->operation) {
 				case ADD:
-					printf("+");
+					sprintf(*end, "+"); *end += strlen(*end);
 					break;
 				case SUSTRACT:
-					printf("-");
+					sprintf(*end, "-"); *end += strlen(*end);
 					break;
 				case MULTIPLY:
-					printf("*");
+					sprintf(*end, "*"); *end += strlen(*end);
 					break;
 				default:
 					__builtin_unreachable(); // This should be impossible
 			}
-			SymbolNodePrintInternal(expression->data.children.right);
+			SymbolNodePrintInternal(expression->data.children.right, end);
 			break;
 		}
 		default:
@@ -183,8 +185,11 @@ void SymbolNodePrintInternal(SymbolNode* expression) {
 }
 
 void SymbolNodePrint(SymbolNode* expression) {
-	SymbolNodePrintInternal(expression);
-	printf("\n");
+	char buffer[MAX_TRACELOG_MSG_LENGTH] = { 0 };
+	char* end = buffer;
+
+	SymbolNodePrintInternal(expression, &end);
+	TraceLog(LOG_DEBUG, buffer);
 }
 
 //-----------------------------------------------------------------------------
@@ -329,12 +334,15 @@ SymbolMatrix* SymbolMatrixDifferentiateSymbolNode(SymbolMatrix* expression, Symb
 }
 
 void SymbolMatrixPrintInternal(SymbolMatrix* expression) {
+	char buffer[MAX_TRACELOG_MSG_LENGTH] = { 0 };
+	char* end = buffer;
+
 	for (unsigned int col = 0; col < expression->cols; ++col) {
 		for (unsigned int row = 0; row < expression->rows; ++row) {
-			printf("(%u, %u) ", row, col);
+			sprintf(end, "(%u, %u) ", row, col); end += strlen(end);
 			SymbolNode* valueExpression = SymbolMatrixGet(expression, row, col);
-			SymbolNodePrintInternal(valueExpression);
-			printf("\n");
+			SymbolNodePrintInternal(valueExpression, &end);
+			TraceLog(LOG_DEBUG, buffer); end = buffer;
 		}
 	}
 }
