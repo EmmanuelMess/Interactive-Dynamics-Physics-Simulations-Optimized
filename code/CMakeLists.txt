@@ -10,9 +10,9 @@ ConstraintBasedSimulator_setup_dependencies()
 
 project(simulator C)
 
-# TODO make lib with source files
+SET(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Werror")
 
-add_executable(simulator main.c
+add_library(simulator_lib
     simulator.c
     symdiff.c
     matrixn.c
@@ -20,21 +20,16 @@ add_executable(simulator main.c
     constraint_type.c
     cases.c)
 
-target_compile_options(simulator PRIVATE -Wall -Wextra -Wpedantic -Werror)
+target_link_libraries(simulator_lib raylib)
 
-target_link_libraries(simulator raylib)
+add_executable(simulator main.c)
 
-add_executable(test
-    simulator.c
-    symdiff.c
-    matrixn.c
-    math.c
-    constraint_type.c
+target_link_libraries(simulator simulator_lib)
+
+add_executable(tests
     test_symdiff_node.c
     test_symdiff_matrix.c
-    test_matrixn.c)
+    test_matrixn.c
+)
 
-target_compile_options(test PRIVATE -Wall -Wextra -Wpedantic -Werror)
-
-target_link_libraries(test raylib)
-target_link_libraries(test criterion)
+target_link_libraries(tests criterion simulator_lib)
